@@ -1,68 +1,129 @@
 # Playwright Test Automation Framework
 
-This repository contains a modern end-to-end test automation framework built with **Playwright**, **TypeScript**, and **Yarn 4**, following the **Page Object Model (POM)** pattern.
-
-It is designed to test the LearnWorlds platform, including UI purchase flows, admin validations, and API endpoints.
+A scalable, maintainable test automation framework built with **Playwright and TypeScript**. The goal is to support web UI and API automation, with a modular architecture that can later be extended to native Android and iOS automation using Appium.
 
 ---
 
-# 🚀 Tech Stack
+## Table of Contents
 
-* [Playwright](https://playwright.dev/)
-* TypeScript
-* Yarn 4
-* Allure Reporting
-* Playwright HTML Reporting
-* Node.js 18+
+1. [Project Overview](#project-overview)
+2. [Technology Stack](#technology-stack)
+3. [Prerequisites](#prerequisites)
+4. [Environment Setup](#environment-setup)
+5. [Clone the Repository](#clone-the-repository)
+6. [Install Dependencies](#install-dependencies)
+7. [Project Structure](#project-structure)
+8. [Running Tests](#running-tests)
+9. [Debugging Tests](#debugging-tests)
+10. [TypeScript](#typescript)
+11. [Code Quality and Formatting](#code-quality-and-formatting)
+12. [Test Reporting with Allure](#test-reporting-with-allure)
+13. [Test Architecture and Design Principles](#test-architecture-and-design-principles)
+14. [Test Data Strategy](#test-data-strategy)
+15. [CI/CD Integration](#cicd-integration)
+16. [Future Enhancements](#future-enhancements)
 
 ---
 
-# 📦 Prerequisites
+## Project Overview
 
-## 1. Install Homebrew (macOS)
+This repository contains a test automation framework designed around the following principles:
 
-If not already installed:
+- Maintainability and reusability.
+- Clear separation of test logic and application interaction.
+- Scalable architecture for different testing layers.
+- Reusable fixtures and utilities.
+- Reliable test execution across multiple browsers.
+- Integration with CI/CD pipelines.
+- Consistent reporting and test diagnostics.
+
+The framework currently provides a Playwright and TypeScript foundation with Chromium, Firefox and WebKit browser projects.
+
+API automation and native mobile automation are planned extensions.
+
+---
+
+## Technology Stack
+
+| Technology | Purpose |
+|---|---|
+| Node.js 24 | JavaScript runtime |
+| TypeScript 5.9 | Programming language |
+| Playwright 1.64 | Browser automation and test runner |
+| Yarn 4 | Package manager |
+| ESLint 10 | Static analysis and code quality |
+| Prettier 3 | Code formatting |
+| Allure Playwright | Test reporting |
+| GitHub Actions | CI/CD |
+| dotenv | Environment configuration |
+
+### Planned technologies
+
+| Technology | Purpose |
+|---|---|
+| Playwright APIRequestContext | API testing |
+| Appium | Native Android and iOS automation |
+| XCUITest | iOS automation backend |
+| UiAutomator2 | Android automation backend |
+
+---
+
+## Prerequisites
+
+The following tools are required:
+
+- macOS
+- Homebrew
+- Node.js 24.x
+- Yarn 4.x
+- Git
+- An IDE such as Visual Studio Code or IntelliJ IDEA
+
+### 1. Install Homebrew
+
+Homebrew is a package manager for macOS.
+
+If it is not already installed, run:
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-Verify:
+Verify the installation:
 
 ```bash
 brew --version
 ```
 
----
+### 2. Install Node.js
 
-## 2. Install Node.js
-
-Install via Homebrew:
+Install Node.js using Homebrew:
 
 ```bash
 brew install node
 ```
 
-Verify:
+Verify the installation:
 
 ```bash
 node -v
 npm -v
 ```
 
-Node 18+ required.
+The project has been set up and tested with Node.js `v24.14.0`.
 
----
+### 3. Install Yarn
 
-## 3. Enable Yarn 4 via Corepack
-
-Corepack is included with Node.
-
-Enable it:
+Enable Corepack:
 
 ```bash
 corepack enable
-corepack prepare yarn@stable --activate
+```
+
+Install the project-compatible Yarn version:
+
+```bash
+corepack prepare yarn@4.18.1 --activate
 ```
 
 Verify:
@@ -71,259 +132,490 @@ Verify:
 yarn -v
 ```
 
----
+Expected version:
 
-## 4. Install Allure CLI
-
-Required for Allure reports:
-
-```bash
-brew install allure
+```text
+4.18.1
 ```
 
-Verify:
-
-```bash
-allure --version
-```
+The repository also specifies its package manager version in `package.json`.
 
 ---
 
-# 📥 Project Installation
+## Clone the Repository
 
-Clone the repository:
+Clone the project:
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/marmiou/playwright-repo.git
+```
+
+Navigate to the project directory:
+
+```bash
 cd playwright-repo
 ```
 
-Install dependencies:
+Verify the repository:
+
+```bash
+git status
+```
+
+---
+
+## Install Dependencies
+
+Install all project dependencies:
 
 ```bash
 yarn install
 ```
 
-Install Playwright browsers:
+Install Playwright browser binaries:
 
 ```bash
-npx playwright install
+yarn playwright install
+```
+
+To install the browser dependencies required by Playwright on Linux CI environments:
+
+```bash
+yarn playwright install --with-deps
+```
+
+Note: `--with-deps` is primarily intended for Linux environments. On macOS, `yarn playwright install` is sufficient for the browser installation.
+
+---
+
+## Project Structure
+
+The repository follows a modular structure. Some directories are currently placeholders for future framework components.
+
+```text
+playwright-repo/
+│
+├── .github/
+│   └── workflows/
+│       └── playwright.yml
+│
+├── src/
+│   ├── fixtures/          # Shared test fixtures (planned)
+│   ├── pages/             # Page Object Models (planned)
+│   └── utils/             # Shared utilities (planned)
+│
+├── tests/
+│   └── example.spec.ts    # Initial Playwright tests
+│
+├── .editorconfig
+├── .gitignore
+├── .yarnrc.yml
+├── eslint.config.mjs
+├── package.json
+├── playwright.config.ts
+├── README.md
+├── test-data-strategy.md
+├── test-plan.md
+├── tsconfig.json
+└── yarn.lock
+```
+
+### Directory responsibilities
+
+**src/fixtures**
+
+Reusable Playwright fixtures, test setup and teardown, and shared test context.
+
+**src/pages**
+
+Page Object Models (POM), encapsulating page locators and user interactions.
+
+**src/utils**
+
+Reusable helper functions, configuration utilities and common framework functionality.
+
+**tests**
+
+Test specifications organized by feature or application area.
+
+---
+
+## Running Tests
+
+Playwright supports Chromium, Firefox and WebKit.
+
+### Run all tests
+
+```bash
+yarn test
+```
+
+### Run tests in a specific browser
+
+Chromium:
+
+```bash
+yarn test:chromium
+```
+
+Firefox:
+
+```bash
+yarn test:firefox
+```
+
+WebKit:
+
+```bash
+yarn test:webkit
+```
+
+### Run tests with a visible browser
+
+By default, Playwright executes tests in headless mode.
+
+To open the browser during execution:
+
+```bash
+yarn test:headed
+```
+
+### Open Playwright UI Mode
+
+```bash
+yarn test:ui
+```
+
+UI Mode provides an interactive interface for running, inspecting and debugging tests.
+
+---
+
+## Debugging Tests
+
+Playwright provides several debugging options.
+
+### Debug Mode
+
+```bash
+yarn test:debug
+```
+
+This opens the Playwright Inspector, allowing you to step through test execution.
+
+### Run a specific test file
+
+```bash
+yarn playwright test tests/example.spec.ts
+```
+
+### Run tests by name
+
+```bash
+yarn playwright test -g "has title"
+```
+
+### Run with trace
+
+The current configuration uses:
+
+```typescript
+trace: 'on-first-retry'
+```
+
+This means Playwright records a trace when a test is retried after failure.
+
+---
+
+## TypeScript
+
+The project uses TypeScript with strict type checking.
+
+Run the type checker:
+
+```bash
+yarn typecheck
+```
+
+The command executes:
+
+```bash
+tsc --noEmit
+```
+
+The TypeScript compiler checks the project without generating JavaScript output.
+
+TypeScript configuration is maintained in `tsconfig.json`.
+
+---
+
+## Code Quality and Formatting
+
+### ESLint
+
+ESLint is configured using the modern Flat Config format.
+
+Configuration file:
+
+```text
+eslint.config.mjs
+```
+
+Run linting:
+
+```bash
+yarn lint
+```
+
+Automatically fix supported issues:
+
+```bash
+yarn lint:fix
+```
+
+The configuration includes:
+
+- ESLint recommended rules.
+- TypeScript ESLint recommended rules.
+- Playwright-specific linting rules.
+- Node.js global definitions.
+
+### Prettier
+
+Prettier is included for consistent code formatting.
+
+Format a specific file:
+
+```bash
+yarn prettier --write tests/example.spec.ts
+```
+
+Check formatting:
+
+```bash
+yarn prettier --check .
 ```
 
 ---
 
-# ▶️ Running Tests
+## Test Reporting with Allure
 
-## Run all tests
+The framework uses `allure-playwright` to generate test execution results.
+
+Allure results are written to:
+
+```text
+allure-results/
+```
+
+This directory is generated during test execution and should not be committed to Git.
+
+### Generate Allure results
+
+Run the tests:
 
 ```bash
-yarn playwright test
+yarn test
 ```
 
----
+### Open the Allure report
 
-## Run tests in headed mode
-
-Opens a visible browser:
-
-```bash
-yarn playwright test --headed
-```
-
----
-
-## Run a specific test file
-
-```bash
-yarn playwright test tests/e2e/example.spec.ts
-```
-
----
-
-## Debug tests
-
-```bash
-yarn playwright test --debug
-```
-
----
-
-# 📊 Reporting
-
-This project supports two reporting systems:
-
-* Playwright HTML Reporter
-* Allure Reporter
-
----
-
-# Playwright HTML Report
-
-Generate report:
-
-```bash
-yarn playwright show-report
-```
-
-Opens:
-
-```
-http://localhost:9323
-```
-
----
-
-# Allure Report
-
-Run tests first:
-
-```bash
-yarn playwright test
-```
-
-Then generate report:
+If the Allure command-line tool is installed:
 
 ```bash
 allure serve allure-results
 ```
 
-This will:
+The command generates and opens a local interactive report.
 
-* generate report
-* open browser automatically
-
----
-
-# 📁 Project Structure
-
-```
-playwright-repo/
-
-playwright.config.ts
-
-tests/
-  e2e/
-  api/
-
-src/
-  pages/
-  fixtures/
-  utils/
-
-test-data/
-
-package.json
-```
+The Allure CLI is a separate tool from the `allure-playwright` npm package. Install it separately if you want to use the `allure` command.
 
 ---
 
-# 🧱 Framework Architecture
+## Test Architecture and Design Principles
 
-This project follows the **Page Object Model (POM)** pattern:
+The framework aims to follow these design principles.
 
-* `pages/` → page objects
-* `fixtures/` → shared test setup
-* `utils/` → helper utilities
-* `tests/` → test specifications
+### Page Object Model
 
----
+Page Object Model will be used to separate page interactions from test specifications.
 
-# ⚙️ Playwright Configuration
+Responsibilities:
 
-Main config file:
+- Encapsulate locators.
+- Provide reusable page actions.
+- Keep tests focused on business behavior.
+- Reduce duplication.
+- Improve maintainability.
 
-```
-playwright.config.ts
-```
+### Fixtures
 
-Includes:
+Playwright fixtures will be used for:
 
-* reporters
-* browser settings
-* timeouts
+- Shared setup and teardown.
+- Page and browser configuration.
+- Authentication and test context.
+- Reusable test dependencies.
 
----
+### Test Organization
 
-# 📊 Allure Integration
+Tests should be grouped by feature or functional area rather than by implementation details.
 
-Configured via:
+### Test Independence
 
-```ts
-reporter: [
-  ['html'],
-  ['allure-playwright'],
-]
-```
+Tests should be independent and repeatable.
 
-Results stored in:
-
-```
-allure-results/
-```
+Avoid dependencies between test cases and minimize shared mutable state.
 
 ---
 
-# 🧹 Ignored Folders
+## Test Data Strategy
 
-These folders are not committed:
+Test data should be managed separately from test implementation.
 
+The repository includes:
+
+```text
+test-data-strategy.md
 ```
-node_modules/
-playwright-report/
-test-results/
-allure-results/
-allure-report/
+
+The intended strategy is to support:
+
+- Reusable test data.
+- Environment-specific configuration.
+- Data-driven testing where appropriate.
+- Controlled test data creation and cleanup.
+- Avoiding hardcoded credentials or sensitive information.
+
+Environment variables should be stored in local `.env` files and excluded from Git.
+
+Example:
+
+```text
+BASE_URL=https://example.com
+API_BASE_URL=https://api.example.com
 ```
+
+Never commit credentials, access tokens or secrets.
 
 ---
 
-# 🧪 Verify Installation
+## CI/CD Integration
 
-Run:
+The repository includes a GitHub Actions workflow:
+
+```text
+.github/workflows/playwright.yml
+```
+
+The intended CI pipeline should support:
+
+1. Dependency installation.
+2. Playwright browser installation.
+3. TypeScript validation.
+4. ESLint checks.
+5. Automated test execution.
+6. Test artifact collection.
+7. Report generation.
+
+The workflow should be updated as the framework evolves to include linting and type checking alongside browser tests.
+
+---
+
+## Future Enhancements
+
+The framework will evolve incrementally.
+
+### Web UI Automation
+
+- Page Object Model.
+- Custom fixtures.
+- Authentication handling.
+- Environment configuration.
+- Reusable components.
+- Cross-browser execution.
+
+### API Automation
+
+- API client abstraction.
+- Request and response validation.
+- Reusable API fixtures.
+- API test data management.
+- Authentication and authorization testing.
+
+Playwright's `APIRequestContext` will be used for API automation, allowing UI and API tests to share the same TypeScript ecosystem.
+
+### Mobile Automation
+
+Native mobile automation is planned using Appium.
+
+The intended architecture will separate mobile automation from Playwright browser automation while allowing shared utilities, configuration and test data where appropriate.
+
+Planned capabilities:
+
+- Android automation using UiAutomator2.
+- iOS automation using XCUITest.
+- Mobile screen objects.
+- Device and platform configuration.
+- Reusable mobile fixtures.
+
+Playwright browser automation and native mobile automation will use separate execution tools.
+
+---
+
+## Development Workflow
+
+Before committing changes, run:
 
 ```bash
-yarn playwright test
+yarn lint
+yarn typecheck
+yarn test
 ```
 
-Expected:
+Review the Git changes:
 
+```bash
+git status
+git diff
 ```
-1 passed
+
+Commit changes using descriptive messages:
+
+```bash
+git add .
+git commit -m "feat: add initial automation framework"
+```
+
+Push changes:
+
+```bash
+git push origin main
 ```
 
 ---
 
-# 🧑‍💻 Useful Commands Summary
+## Useful Commands Reference
 
-| Command                       | Description            |
-| ----------------------------- | ---------------------- |
-| yarn playwright test          | Run tests              |
-| yarn playwright test --headed | Run with browser UI    |
-| yarn playwright show-report   | Open Playwright report |
-| allure serve allure-results   | Open Allure report     |
-
----
-
-# 📚 References
-
-Playwright:
-
-https://playwright.dev/
-
-Allure:
-
-https://allurereport.org/
+| Command | Description |
+|---|---|
+| `yarn install` | Install dependencies |
+| `yarn playwright install` | Install Playwright browsers |
+| `yarn test` | Run all tests |
+| `yarn test:headed` | Run tests with visible browser |
+| `yarn test:ui` | Open Playwright UI Mode |
+| `yarn test:debug` | Run in debug mode |
+| `yarn test:chromium` | Run Chromium tests |
+| `yarn test:firefox` | Run Firefox tests |
+| `yarn test:webkit` | Run WebKit tests |
+| `yarn test:report` | Open Playwright HTML report |
+| `yarn typecheck` | Run TypeScript checks |
+| `yarn lint` | Run ESLint |
+| `yarn lint:fix` | Automatically fix supported lint issues |
 
 ---
 
-# 👩‍💻 Author
+## Notes
 
-Markella Efthymiou
+This project is under active development. The initial focus is to establish a reliable, maintainable Playwright foundation before introducing additional abstractions and automation layers.
 
----
-
-# 📌 Notes
-
-This framework was created as part of the LearnWorlds QA Automation assignment.
-
----
+New framework capabilities should be introduced incrementally, with a preference for simplicity, clear responsibilities and reusable components.

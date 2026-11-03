@@ -58,7 +58,8 @@
           "evaluate-quality"
         ],
         "direct_response_allowed": false,
-        "rationale": "The request is to design test scenarios, not assess an executed quality outcome."
+        "rationale": "The request is to design test scenarios, not assess an executed quality outcome.",
+        "expected_action": "activate_skill"
       }
     },
     {
@@ -77,7 +78,8 @@
           "evaluate-quality"
         ],
         "direct_response_allowed": false,
-        "rationale": "The request is to diagnose a failed run before drawing a quality-readiness conclusion."
+        "rationale": "The request is to diagnose a failed run before drawing a quality-readiness conclusion.",
+        "expected_action": "activate_skill"
       }
     },
     {

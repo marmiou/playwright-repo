@@ -3,7 +3,7 @@
   "skill": "evaluate-quality",
   "source": {
     "path": ".claude/skills/evaluate-quality/SKILL.md",
-    "description": ""
+    "description": "Evaluates the quality outcome of a feature, change or release candidate using requirement coverage, risk treatment, execution evidence, independent review and residual risk. Use at QE closure or when communicating quality readiness to stakeholders."
   },
   "cases": [
     {

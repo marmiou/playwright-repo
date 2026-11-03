@@ -1,56 +1,140 @@
 # Behavioural Quality Rubric
 
-Score the actual generated artifact, not whether the skill fired or whether the response sounds convincing. Apply only dimensions relevant to the skill; mark genuinely inapplicable dimensions N/A and explain why. For each score, cite output, diff, trace or source evidence.
+Assess the actual output or artifact against the original task, authoritative requirements and repository evidence. Do not score whether a skill activated; routing is assessed separately in `skill-selection.md`. Do not award credit for confident wording, plausible intent or unverified claims.
 
-## Scale
+Apply the dimensions below to each behavioural case. Before scoring, identify which case expectations and dimensions are mandatory for that case. Use the case's stated expectations as the primary scope; do not invent additional acceptance criteria during evaluation.
 
-- **4 — Meets fully:** all stated indicators are evidenced; no material omission.
-- **3 — Mostly meets:** correct overall; only minor, non-blocking omissions.
-- **2 — Partially meets:** useful work but one material gap or multiple minor gaps.
-- **1 — Mostly fails:** major omissions, unsupported assumptions or incorrect work.
-- **0 — Fails:** absent, fundamentally incorrect or contradicts the requirement.
-- **N/A — Not applicable:** dimension does not apply to this case; exclude from denominator with rationale.
-- **NE — Not evaluable:** required source/evidence unavailable; do not convert to zero or PASS.
+## Rating scale
 
-## Dimensions and observable indicators
+Use the same scale for every dimension, applying the dimension-specific anchors below:
 
-| Dimension | Weight | Indicators |
-|---|---:|---|
-| Correctness | 25% | Assertions, calculations, diagnoses or recommendations match approved requirements/contracts and actual inspected code. No fabricated API behaviour or unsupported conclusion. |
-| Completeness | 15% | All case-specific mandatory expectations addressed; important positive/negative/boundary/failure paths included as appropriate. |
-| Risk identification | 15% | Material business, security, privacy, data-integrity, reliability and regression risks identified and prioritised with rationale. |
-| Traceability | 10% | Outputs map to source requirement/risk and identify evidence; assumptions are not presented as approved facts. |
-| Evidence and epistemic discipline | 15% | Claims link to actual source, diff, trace or command output; unknowns and confidence are calibrated; no invented execution. |
-| Maintainability and architecture | 10% | Follows repository patterns, layer boundaries, isolation and simplicity; no unjustified abstractions/dependencies. |
-| Repository convention compliance | 5% | Correct paths, language, scripts, naming, configuration and documented patterns. |
-| Communication and actionability | 5% | Output is structured, specific, prioritised and usable; clarifications and next actions have owners where relevant. |
+- **4 — Fully meets:** all relevant indicators are satisfied with direct evidence; no material gap.
+- **3 — Substantially meets:** outcome is correct and usable; only a minor omission remains, with no material effect on correctness, risk or use.
+- **2 — Partially meets:** some useful work is present, but there is at least one material gap, or several minor gaps reduce reliability or usability.
+- **1 — Largely fails:** major required elements are missing, materially incorrect, or unsupported; the output is not safe/reliable to use without substantial rework.
+- **0 — Fails:** the dimension is wholly absent where required, fundamentally incorrect, or directly contradicts an authoritative requirement or safety boundary.
+- **N/A — Not applicable:** the dimension genuinely does not apply to this case. Give a short reason; exclude its weight from the denominator.
+- **NE — Not evaluable:** evidence needed to judge the dimension is unavailable or inaccessible. State exactly what is missing. Do not convert NE to zero, N/A or PASS.
 
-Weighted score = sum(score / 4 × weight) over applicable dimensions, divided by sum(applicable weights), multiplied by 100. Round to one decimal. Exclude NE dimensions from the score and set verdict BLOCKED if any mandatory dimension cannot be evaluated.
+A score of 1 or 3 is the intermediate judgement between the adjacent anchors. Evaluators must cite evidence for every 0–4 score. N/A and NE require a reason.
 
-## Verdict thresholds
+## Dimensions and dimension-specific anchors
 
-- **PASS:** 85–100, no critical failure, Correctness >= 3, Evidence >= 3, and all case-specific mandatory expectations pass.
-- **PASS WITH OBSERVATIONS:** 75–84.9, no critical failure, Correctness >= 3 and no mandatory expectation fails. Requires human acceptance of minor observations before benchmark baseline.
-- **FAIL:** below 75, Correctness < 3, any mandatory expectation fails, or any critical failure.
-- **BLOCKED:** authoritative source, output, diff or required execution evidence is missing such that a fair assessment cannot be made.
+### 1. Correctness — 25%
 
-Thresholds do not override critical-failure rules. A high numerical score cannot rescue a failed mandatory expectation.
+Assess factual, technical and behavioural correctness against authoritative requirements, contracts and inspected repository state.
 
-## Case-level expectation grading
+- **4:** All material conclusions, assertions, calculations, recommendations and code behaviour match the authoritative sources and observed implementation.
+- **3:** Core outcome is correct; only a minor imprecision or non-material defect remains.
+- **2:** Partly correct, but at least one material conclusion, assertion, calculation or recommendation is unresolved or wrong.
+- **1:** Major parts are incorrect, rely on unsupported assumptions, or conflict with an authoritative source.
+- **0:** Fundamentally wrong or directly contradicts an approved requirement in a way that invalidates the result.
 
-For every `expectations[]` item in the case:
-- PASS: directly evidenced.
-- PARTIAL: attempted but incomplete or weakly evidenced.
-- FAIL: omitted, contradicted or materially incorrect.
-- NOT ASSESSABLE: required evidence is unavailable.
+### 2. Completeness — 15%
 
-A response's claim that it performed an action is not evidence that it did so. For implementation cases, inspect the actual diff; for execution claims, inspect actual command output/artifacts.
+Assess coverage of the case's required deliverables and mandatory expectations, not an evaluator's preferred extras.
 
-## Skill-specific application
+- **4:** All mandatory expectations and material parts of the requested deliverable are addressed.
+- **3:** All critical content is present; only minor, non-blocking detail is omitted.
+- **2:** One material requirement or several important details are missing.
+- **1:** Multiple mandatory elements are missing; the deliverable is substantially incomplete.
+- **0:** The requested deliverable or its essential content is absent.
 
-- Requirement analysis: source authority, ambiguity/conflict handling, readiness and decision ownership.
-- Strategy/cases: risk-to-test-level rationale, observable oracle, boundary/negative coverage and traceability.
-- Web/API implementation: correct layer, assertions/contracts, data isolation, security and actual validation.
-- Verification/investigation: evidence preservation, calibrated classification, exact run scope and no false PASS.
-- Review/quality: independent inputs, severity, residual risk and decision authority.
-- Workflow orchestration: correct sequence, proportionality and blocked gates.
+### 3. Risk identification — 15%
+
+Assess whether material product, business, security, privacy, data-integrity, reliability and regression risks are identified and prioritised where relevant.
+
+- **4:** Relevant material risks are identified, prioritised and connected to proportionate mitigations, tests or decisions.
+- **3:** Main risks and appropriate responses are identified; a minor risk or rationale is missing.
+- **2:** Some risks are identified, but a material risk, priority or mitigation is missing.
+- **1:** Major foreseeable risks are overlooked, misprioritised or treated superficially.
+- **0:** The output ignores a critical risk or recommends an action that creates an unacceptable risk.
+
+### 4. Traceability — 10%
+
+Assess links between the task, approved sources, risks, test design, implementation and conclusions, as applicable.
+
+- **4:** Material conclusions and deliverables are traceable to specific requirements, risks or source evidence; assumptions and unknowns are clearly labelled.
+- **3:** Main links are clear; minor references or mappings are missing.
+- **2:** Partial traceability exists, but important conclusions cannot be reliably mapped to their source.
+- **1:** Traceability is largely absent or materially misleading.
+- **0:** The output fabricates source authority or presents assumptions as approved requirements.
+
+### 5. Evidence and epistemic discipline — 15%
+
+Assess whether claims are supported by evidence actually available to and inspected by the executor, and whether uncertainty and execution status are represented honestly.
+
+- **4:** Material claims cite or identify the relevant source, diff, trace, artifact or command output; uncertainty and limitations are accurately stated; no unsupported execution claim.
+- **3:** Evidence supports the main claims; a minor citation, detail or confidence qualification is missing.
+- **2:** Some claims are evidenced, but a material claim lacks support or evidence scope is unclear.
+- **1:** Several material claims are unsupported, evidence is misrepresented, or hypotheses are presented as facts.
+- **0:** The output fabricates execution, results, artifacts, approvals or evidence, or knowingly misstates what was observed.
+
+### 6. Maintainability and architecture — 10%
+
+Apply primarily to implementation and design artifacts. For non-code outputs, assess whether the proposed approach is proportionate and compatible with the stated architecture.
+
+- **4:** Fits established architecture and patterns; clear, simple, isolated and maintainable; no unjustified complexity or dependencies.
+- **3:** Sound and maintainable overall; only a minor convention or design refinement is needed.
+- **2:** Usable but introduces a material maintainability, isolation, layering or complexity concern.
+- **1:** Poorly aligned with architecture or difficult to maintain; substantial redesign is needed.
+- **0:** Violates a critical architectural boundary or creates an inherently unsafe/unmaintainable solution.
+
+### 7. Repository convention compliance — 5%
+
+Apply when repository-specific work is requested or produced. Do not penalise a conceptual answer for not changing repository files.
+
+- **4:** Uses the correct repository paths, language, scripts, naming, configuration and documented conventions, verified against the repository.
+- **3:** Correct overall; only a minor convention deviation.
+- **2:** One material convention is missed or repository alignment is only partly demonstrated.
+- **1:** Multiple conventions are violated or the approach relies on assumed repository structure.
+- **0:** The result materially conflicts with repository constraints or claims repository changes that did not occur.
+
+### 8. Communication and actionability — 5%
+
+Assess whether the output makes its findings, limitations and next steps understandable and usable by the intended audience.
+
+- **4:** Clear, specific and prioritised; separates facts, assumptions, decisions and actions; owners or required decision-makers are identified where relevant.
+- **3:** Clear and usable; a minor prioritisation, ownership or explanation detail is missing.
+- **2:** Understandable but important next steps, rationale or ownership are ambiguous.
+- **1:** Vague, poorly structured or difficult to act on; material decisions or next steps are obscured.
+- **0:** Misleading or unusable communication prevents a responsible next action.
+
+## Case expectation assessment
+
+Assess every `expectations[]` item separately:
+
+- **PASS:** directly supported by the supplied output or artifact and, where relevant, execution evidence.
+- **PARTIAL:** addressed but incomplete, weakly evidenced or only partly correct.
+- **FAIL:** omitted, contradicted or materially incorrect.
+- **NOT ASSESSABLE:** the required source or evidence is unavailable.
+
+Do not infer that a criterion passed because a related criterion passed. Cite the smallest useful evidence location (file and line, diff hunk, trace/event, command output or quoted response). A response's claim that it performed an action is not proof that it did so.
+
+## N/A and NE controls
+
+- Use **N/A** only when the dimension is genuinely outside the case's scope. Example: repository convention compliance may be N/A for a purely conceptual explanation that requests no repository inspection or change.
+- Do not use N/A merely because the executor omitted the work, lacked skill, or failed to obtain evidence.
+- Use **NE** when the evidence needed to judge a relevant dimension is missing, inaccessible or not supplied. Identify the missing evidence and who or what must provide it.
+- If a case-mandatory expectation is NOT ASSESSABLE, or a mandatory dimension is NE, the case cannot receive an unqualified PASS; its overall disposition must be considered BLOCKED by the verdict rules.
+- If a non-mandatory dimension is NE, disclose it and exclude its weight from the numerical score; do not silently treat the missing evidence as success.
+- Never convert a missing artifact, missing log or unprovided requirement into a zero unless the case explicitly requires the executor to produce it and the executor failed to do so.
+
+## Weighted score calculation
+
+For dimensions scored 0–4, calculate:
+
+`weighted score = 100 × Σ((dimension score ÷ 4) × dimension weight) ÷ Σ(applicable dimension weights)`
+
+Exclude N/A and NE dimensions from both numerator and denominator. Report the applicable weight total alongside the score so readers can see how much of the rubric was assessed. Round to one decimal place. If no dimensions are scoreable, report **NO SCORE**.
+
+The weighted score is descriptive evidence, not a verdict by itself. Do not use a numerical threshold here to override failed mandatory expectations or governance checks. The overall case verdict and governance precedence are defined in the evaluation protocol, not by this rubric alone.
+
+## Application guidance by skill family
+
+- **Requirement analysis:** source authority, ambiguity/conflict handling, readiness and decision ownership.
+- **Strategy and test design:** risk-to-test-level rationale, observable oracle, boundary/negative coverage and traceability.
+- **Web/API implementation:** correct test layer, meaningful assertions/contracts, data isolation, security and actual validation.
+- **Verification and investigation:** evidence preservation, calibrated classification, exact run scope and no false PASS.
+- **Review and quality evaluation:** independent inputs, severity, residual risk and decision authority.
+- **Workflow orchestration:** correct routing is assessed separately; assess behavioural sequencing, proportionality, dependencies and blocked gates here.

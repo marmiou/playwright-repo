@@ -56,7 +56,9 @@ Do not claim independent verification when reviewing your own implementation in 
 
 ## 4. Skills and Specialist Agents
 
-Use repository skills for repeatable workflows.
+Use repository skills for repeatable workflows. The catalogue is maintained in `docs/quality-engineering/ai/quality-engineering-skills.md`.
+
+Start cross-cutting or new QE tasks with `/qe-workflow`. For focused work, invoke the matching skill directly (for example `/analyze-requirement`, `/design-test-strategy`, `/design-test-cases`, `/add-web-test`, `/add-api-test`, `/verify-implementation`, `/investigate-failure`, `/review-tests` or `/evaluate-quality`). Use only the stages relevant to the task; do not force a heavyweight lifecycle onto a trivial change.
 
 Use specialist agents when their responsibilities are relevant:
 

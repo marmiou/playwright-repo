@@ -3,7 +3,7 @@
   "skill": "verify-implementation",
   "source": {
     "path": ".claude/skills/verify-implementation/SKILL.md",
-    "description": ""
+    "description": "Verifies a Quality Engineering change using proportionate execution, static checks, evidence review and repository quality gates. Use after adding or modifying tests, fixtures, configuration or automation code, before reporting completion or requesting independent review."
   },
   "cases": [
     {

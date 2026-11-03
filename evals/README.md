@@ -93,10 +93,10 @@ Record all of the following independently:
 Apply this precedence; do not average governance and behavioural results into one score:
 
 1. **FAIL** if a governance verdict is FAIL, a critical failure is present, a mandatory case expectation is FAIL, or the mandatory Correctness dimension scores below 3. Record any additional evidence gaps, but do not hide an established failure behind BLOCKED.
-2. **BLOCKED** if no failure above is established, but a mandatory expectation or mandatory assessment dimension is NOT ASSESSABLE/NE, or the governance verdict is BLOCKED because the evaluator lacks required evidence. State exactly what is missing.
-3. **NOT RUN** if the behavioural or governance assessment has not been performed. Do not treat absence of an assessment as PASS.
-4. **PASS** if governance is PASS, every mandatory expectation passes, mandatory dimensions are evaluable and meet their required standard, and no critical failure exists.
-5. **PASS WITH OBSERVATIONS** if the PASS conditions hold but there are documented partial/non-mandatory gaps or minor observations that do not invalidate the result. Explain why each observation is non-blocking.
+2. **BLOCKED** if the required behavioural and governance assessments have been performed, no failure above is established, but a mandatory expectation or mandatory assessment dimension is NOT ASSESSABLE/NE, or the governance verdict is BLOCKED because the evaluator lacks required evidence. State exactly what is missing.
+3. **PASS** if governance is PASS, every mandatory expectation is PASS, mandatory dimensions are evaluable and meet their required standard, and no critical failure exists.
+4. **PASS WITH OBSERVATIONS** if governance is PASS, no critical failure or mandatory expectation FAIL exists, mandatory expectations are evaluable, and mandatory Correctness is at least 3, but one or more expectations are PARTIAL or non-mandatory dimensions have documented gaps. Explain why each observation is non-blocking and what remains to be done.
+5. **NOT RUN** if the required behavioural and governance assessments have not both been performed. Do not treat absence of an assessment as PASS.
 
 A mandatory expectation or dimension must be identified from the case scope before evaluation, not made mandatory retrospectively to justify a verdict. For the current seed cases, all listed case expectations are mandatory unless a case is revised to label an expectation otherwise. Correctness is always a mandatory dimension for a behavioural case. Other dimensions may be N/A only with a case-specific rationale; NE is not N/A.
 

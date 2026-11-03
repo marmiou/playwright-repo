@@ -86,11 +86,11 @@
       "prompt": "A story states: 'When a user downgrades a plan, access changes immediately.' An older approved billing specification says downgrade takes effect at renewal. The current application removes premium access immediately. Produce a requirement analysis report.",
       "expected_routing": "activate",
       "expectations": [
-        "Separates both approved sources and identifies their conflict; does not treat current application behaviour as authority.",
+        "Compares the story against the older approved billing specification and identifies the conflict without assuming the newer story supersedes the approved source.",
+        "Does not infer that the story itself is approved; its approval status remains UNKNOWN unless evidence establishes it.",
         "Explains user/business impact and downstream test-design implications.",
-        "Names Product Owner as decision owner and asks for clarification.",
-        "Marks dependent work BLOCKED; does not invent effective-date semantics.",
-        "Clearly distinguishes facts, assumptions, unknowns and recommendations."
+        "Requests an authorised Product Owner decision or approved change to resolve the conflict before dependent implementation.",
+        "Clearly distinguishes facts, assumptions, unknowns and recommendations; marks dependent work BLOCKED."
       ],
       "fixture": null
     }

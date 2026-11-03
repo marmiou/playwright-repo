@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0.0",
+  "skill": "investigate-failure",
+  "source": {
+    "path": ".claude/skills/investigate-failure/SKILL.md",
+    "description": ""
+  },
+  "cases": [
+    {
+      "id": "investigate-failure-1",
+      "type": "positive",
+      "prompt": "A Playwright test fails intermittently in CI but passes locally. Investigate using traces, environment and data evidence.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Preserves original run evidence and compares CI/local context.",
+        "Considers timing, parallelism, data isolation, browser and environment without premature classification.",
+        "Retains UNKNOWN if evidence is insufficient."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "investigate-failure-2",
+      "type": "positive",
+      "prompt": "An API test returns 503 after a deployment. Determine whether this is product, dependency or environment failure.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Compares contract, service/dependency health and execution timeline.",
+        "Distinguishes first causal failure from cascading symptoms.",
+        "Provides evidence-backed root cause confidence and targeted remediation."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "investigate-failure-3",
+      "type": "positive",
+      "prompt": "A test started failing after a locator refactor. Analyse whether the failure is an automation defect or product regression.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Inspects changed locator, assertion and product evidence.",
+        "Does not assume temporal correlation proves cause.",
+        "Avoids weakening assertion or adding fixed wait."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "investigate-failure-4",
+      "type": "negative",
+      "prompt": "Create new API tests for the documented endpoint; no failure has occurred.",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Routes to add-api-test."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "investigate-failure-5",
+      "type": "negative",
+      "prompt": "Explain what a Playwright trace contains, without investigating a specific failure.",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Answers conceptually without invoking failure investigation."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "investigate-failure-6",
+      "type": "behavioral",
+      "prompt": "A test fails once with `expect(status).toBe(200)` but retry passes. No trace, server logs or reproduction is available. Provide an investigation report.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Classifies cause as UNKNOWN or provisional intermittent, not harmless flakiness or product defect.",
+        "States that retry pass does not prove reliability or erase initial failure.",
+        "Lists missing evidence and targeted safe next steps; preserves initial failure artifacts.",
+        "Does not recommend arbitrary waits, weakened assertion or blanket retries.",
+        "Separates observed facts from hypotheses and gives calibrated confidence."
+      ],
+      "fixture": null
+    }
+  ]
+}

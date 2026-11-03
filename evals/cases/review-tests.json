@@ -58,7 +58,8 @@
           "review-tests"
         ],
         "direct_response_allowed": false,
-        "rationale": "The task is implementation of browser tests, not review of existing tests."
+        "rationale": "The task is implementation of browser tests, not review of existing tests.",
+        "expected_action": "activate_skill"
       }
     },
     {
@@ -77,7 +78,8 @@
           "review-tests"
         ],
         "direct_response_allowed": true,
-        "rationale": "The request is a direct documentation explanation and supplies no test changes to review."
+        "rationale": "The request is a direct documentation explanation and supplies no test changes to review.",
+        "expected_action": "direct_response"
       }
     },
     {

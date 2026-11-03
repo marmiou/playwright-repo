@@ -110,7 +110,7 @@ Behavioural evaluation records are defined by [`schemas/evaluation-result.schema
 
 The record captures:
 
-- Case ID, evaluation status (`COMPLETE`, `BLOCKED`, `NOT RUN`) and task status separately.
+- Case ID, evaluation status (`COMPLETE`, `BLOCKED`, `NOT RUN`) and task status separately (`COMPLETED`, `PARTIALLY_COMPLETED`, `FAILED`, `BLOCKED`, `NOT_STARTED`). Record a task-status rationale where needed to explain a block or incomplete outcome.
 - All five case expectations, each assessed as `PASS`, `PARTIAL`, `FAIL` or `NOT ASSESSABLE`, with evidence and rationale.
 - All eight behavioural dimensions, with explicit applicability, mandatory status, outcome (0–4 / `N/A` / `NE`), evidence and rationale. Correctness must remain applicable and mandatory.
 - Governance verdict, individual G1–G9 check outcomes, applicability overrides and supporting evidence.

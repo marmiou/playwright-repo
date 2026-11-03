@@ -58,7 +58,8 @@
           "verify-implementation"
         ],
         "direct_response_allowed": false,
-        "rationale": "The request is to plan verification coverage, not verify an existing change."
+        "rationale": "The request is to plan verification coverage, not verify an existing change.",
+        "expected_action": "activate_skill"
       }
     },
     {
@@ -77,7 +78,8 @@
           "verify-implementation"
         ],
         "direct_response_allowed": false,
-        "rationale": "The request is an independent assessment of test quality, not execution verification."
+        "rationale": "The request is an independent assessment of test quality, not execution verification.",
+        "expected_action": "activate_skill"
       }
     },
     {

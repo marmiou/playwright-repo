@@ -57,8 +57,9 @@
         "forbidden_skills": [
           "analyze-requirement"
         ],
-        "direct_response_allowed": true,
-        "rationale": "A mechanical local rename with no behaviour or requirement change does not need a specialist QE skill."
+        "direct_response_allowed": false,
+        "rationale": "A mechanical local rename with no behaviour or requirement change does not need a specialist QE skill.",
+        "expected_action": "local_change"
       }
     },
     {
@@ -77,7 +78,8 @@
           "analyze-requirement"
         ],
         "direct_response_allowed": true,
-        "rationale": "This is a conceptual question, not analysis of a project requirement."
+        "rationale": "This is a conceptual question, not analysis of a project requirement.",
+        "expected_action": "direct_response"
       }
     },
     {

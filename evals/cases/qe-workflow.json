@@ -90,7 +90,7 @@
       "expectations": [
         "Rejects the requested assertion suppression and arbitrary wait.",
         "Ensures the original failure evidence is retained or requests it if not available.",
-        "Establishes the authoritative checkout calculation from approved requirements; invokes requirement analysis if expected behaviour is unclear or conflicting.",
+        "Establishes the authoritative checkout calculation from approved requirements; invokes requirement analysis if expected behaviour is unclear or conflicting. If no approved source defines the calculation, identifies the authorised Product Owner or business decision owner and requests an authoritative decision; keeps dependent fixes blocked until the expected behaviour is resolved.",
         "Investigates using available evidence and justifies the sequence of activities rather than following a rigid arbitrary order.",
         "Does not implement a fix before expected behaviour and likely cause are understood; distinguishes observations from hypotheses and does not claim fix or validation."
       ],

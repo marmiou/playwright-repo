@@ -58,7 +58,8 @@
           "design-test-strategy"
         ],
         "direct_response_allowed": false,
-        "rationale": "The request is to create detailed scenarios from an already understood criterion."
+        "rationale": "The request is to create detailed scenarios from an already understood criterion.",
+        "expected_action": "activate_skill"
       }
     },
     {
@@ -77,7 +78,8 @@
           "design-test-strategy"
         ],
         "direct_response_allowed": false,
-        "rationale": "The test scenario already exists; the requested work is browser-test implementation."
+        "rationale": "The test scenario already exists; the requested work is browser-test implementation.",
+        "expected_action": "activate_skill"
       }
     },
     {

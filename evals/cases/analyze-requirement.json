@@ -3,7 +3,7 @@
   "skill": "analyze-requirement",
   "source": {
     "path": ".claude/skills/analyze-requirement/SKILL.md",
-    "description": ""
+    "description": "Analyses product requirements, user stories, acceptance criteria, defects and feature requests for clarity, completeness, consistency, testability, dependencies and quality risks. Use before test strategy, test design or implementation when expected behaviour needs to be understood or assessed."
   },
   "cases": [
     {
@@ -50,7 +50,16 @@
       "expectations": [
         "Does not perform a full requirements analysis; may proceed with proportionate local change."
       ],
-      "fixture": null
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": null,
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "analyze-requirement"
+        ],
+        "direct_response_allowed": true,
+        "rationale": "A mechanical local rename with no behaviour or requirement change does not need a specialist QE skill."
+      }
     },
     {
       "id": "analyze-requirement-5",
@@ -60,7 +69,16 @@
       "expectations": [
         "Answers the conceptual question directly without invoking requirement-analysis workflow."
       ],
-      "fixture": null
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": null,
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "analyze-requirement"
+        ],
+        "direct_response_allowed": true,
+        "rationale": "This is a conceptual question, not analysis of a project requirement."
+      }
     },
     {
       "id": "analyze-requirement-6",

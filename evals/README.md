@@ -104,6 +104,23 @@ Record all of the following independently:
 6. Task status and any unresolved owner decision.
 7. Overall case verdict, critical-failure flag and human-adjudication status.
 
+### Evaluation-result schema
+
+Behavioural evaluation records are defined by [`schemas/evaluation-result.schema.json`](schemas/evaluation-result.schema.json), using JSON Schema Draft 2020-12. Each record represents one evaluator's assessment of one behavioural case; it is not a benchmark-run manifest or an automated verdict engine.
+
+The record captures:
+
+- Case ID, evaluation status (`COMPLETE`, `BLOCKED`, `NOT RUN`) and task status separately.
+- All five case expectations, each assessed as `PASS`, `PARTIAL`, `FAIL` or `NOT ASSESSABLE`, with evidence and rationale.
+- All eight behavioural dimensions, with explicit applicability, mandatory status, outcome (0–4 / `N/A` / `NE`), evidence and rationale. Correctness must remain applicable and mandatory.
+- Governance verdict, individual G1–G9 check outcomes, applicability overrides and supporting evidence.
+- Critical-failure flag, case verdict, human-adjudication status, weighted score, applicable weight total, coverage and excluded-dimension reasons.
+- Provenance for dataset/repository revisions, working-tree state, run timestamp, executor/evaluator model and host, skill instruction hash, configuration, permission mode, available tools and evidence references.
+
+The schema validates record structure and local field constraints. A future custom validator must additionally verify expectation indices and dimension/check uniqueness and completeness; that the five recorded expectation texts match the selected case; that the governance matrix defaults and overrides reconcile; that status/verdict precedence is respected; that mandatory expectation and Correctness outcomes agree with the case verdict; that the weighted score, applicable weight total and coverage are mathematically consistent with the rubric; and that evidence references and provenance are complete and resolvable. These checks must not attempt to decide whether an evaluator's substantive judgement is correct.
+
+This schema covers Tier 3 behavioural assessments. Tier 2 routing measurements remain reported separately under the routing protocol; a routing-result format can be added later without conflating routing accuracy with behavioural quality.
+
 ### Overall case verdict
 
 Apply this precedence; do not average governance and behavioural results into one score:

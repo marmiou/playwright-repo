@@ -14,7 +14,7 @@ For every negative case, evaluate the structured `routing_expectation` in the ca
 
 - `activate_skill`: the expected primary skill must be selected. Companion skills may be used only when listed in `allowed_companion_skills` and justified by the task.
 - `direct_response`: no skill should be activated; a direct answer is permitted and expected.
-- `local_change`: no specialist QE skill should be activated; perform or propose only the bounded local change requested. This is distinct from a conceptual direct response.
+- `local_change`: no specialist QE skill should be activated; make only the bounded local change requested when repository access and permissions allow. If execution is unavailable or unauthorised, state the limitation and identify the missing access or approval; do not substitute generic conceptual advice. This is distinct from a conceptual direct response.
 - A non-null `expected_primary_skill` identifies the required primary route. A null primary is valid for `direct_response` and `local_change`.
 - `forbidden_skills` must not be invoked. An unlisted companion is a routing defect unless the evaluator documents why it was necessary and consistent with the task; do not silently treat it as allowed.
 - `direct_response_allowed` must be true only for `direct_response`. It must be false for `activate_skill` and `local_change`.

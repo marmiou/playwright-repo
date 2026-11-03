@@ -50,7 +50,16 @@
       "expectations": [
         "Routes to design-test-cases rather than evaluating outcome."
       ],
-      "fixture": null
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "design-test-cases",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "evaluate-quality"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "The request is to design test scenarios, not assess an executed quality outcome."
+      }
     },
     {
       "id": "evaluate-quality-5",
@@ -60,7 +69,16 @@
       "expectations": [
         "Routes to investigate-failure; quality evaluation may consume completed investigation, not replace it."
       ],
-      "fixture": null
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "investigate-failure",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "evaluate-quality"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "The request is to diagnose a failed run before drawing a quality-readiness conclusion."
+      }
     },
     {
       "id": "evaluate-quality-6",

@@ -3,7 +3,7 @@
   "skill": "investigate-failure",
   "source": {
     "path": ".claude/skills/investigate-failure/SKILL.md",
-    "description": ""
+    "description": "Investigates failed, flaky or unexpected automated tests using execution evidence, reproduction, failure classification and root-cause analysis. Use when a Playwright test, API test, CI run or quality check fails or behaves inconsistently."
   },
   "cases": [
     {

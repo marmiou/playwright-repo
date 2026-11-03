@@ -3,7 +3,7 @@
   "skill": "review-tests",
   "source": {
     "path": ".claude/skills/review-tests/SKILL.md",
-    "description": ""
+    "description": "Performs an independent Maker–Checker review of test automation changes, test designs and QE implementation against requirements, risks, architecture, reliability, security and verification evidence. Use after implementation and verification when an independent quality assessment is required."
   },
   "cases": [
     {

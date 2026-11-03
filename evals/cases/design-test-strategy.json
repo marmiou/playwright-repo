@@ -3,7 +3,7 @@
   "skill": "design-test-strategy",
   "source": {
     "path": ".claude/skills/design-test-strategy/SKILL.md",
-    "description": ""
+    "description": "Creates a risk-based test strategy for an understood feature, change or defect, defining test scope, levels, types, priorities, coverage, data, environments, dependencies and exit criteria. Use after requirement analysis when deciding how quality will be evaluated."
   },
   "cases": [
     {
@@ -50,7 +50,16 @@
       "expectations": [
         "Routes to test-case design rather than producing a strategy."
       ],
-      "fixture": null
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "design-test-cases",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "design-test-strategy"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "The request is to create detailed scenarios from an already understood criterion."
+      }
     },
     {
       "id": "design-test-strategy-5",
@@ -60,7 +69,16 @@
       "expectations": [
         "Routes to web automation implementation; does not create a new strategy unless a gap is discovered."
       ],
-      "fixture": null
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "add-web-test",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "design-test-strategy"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "The test scenario already exists; the requested work is browser-test implementation."
+      }
     },
     {
       "id": "design-test-strategy-6",

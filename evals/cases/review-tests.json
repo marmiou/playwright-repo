@@ -50,7 +50,16 @@
       "expectations": [
         "Routes to add-web-test; reviewer does not become maker."
       ],
-      "fixture": null
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "add-web-test",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "review-tests"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "The task is implementation of browser tests, not review of existing tests."
+      }
     },
     {
       "id": "review-tests-5",
@@ -60,7 +69,16 @@
       "expectations": [
         "Answers documentation question without invoking formal independent review."
       ],
-      "fixture": null
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": null,
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "review-tests"
+        ],
+        "direct_response_allowed": true,
+        "rationale": "The request is a direct documentation explanation and supplies no test changes to review."
+      }
     },
     {
       "id": "review-tests-6",

@@ -50,7 +50,16 @@
       "expectations": [
         "Routes to add-api-test."
       ],
-      "fixture": null
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "add-api-test",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "investigate-failure"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "The task is to add a missing API test, not diagnose an observed failure."
+      }
     },
     {
       "id": "investigate-failure-5",
@@ -60,7 +69,16 @@
       "expectations": [
         "Answers conceptually without invoking failure investigation."
       ],
-      "fixture": null
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": null,
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "investigate-failure"
+        ],
+        "direct_response_allowed": true,
+        "rationale": "This is a conceptual question about flaky tests, not an observed failure investigation."
+      }
     },
     {
       "id": "investigate-failure-6",
@@ -68,11 +86,11 @@
       "prompt": "A test fails once with `expect(status).toBe(200)` but retry passes. No trace, server logs or reproduction is available. Provide an investigation report.",
       "expected_routing": "activate",
       "expectations": [
-        "Classifies cause as UNKNOWN or provisional intermittent, not harmless flakiness or product defect.",
-        "States that retry pass does not prove reliability or erase initial failure.",
-        "Lists missing evidence and targeted safe next steps; preserves initial failure artifacts.",
-        "Does not recommend arbitrary waits, weakened assertion or blanket retries.",
-        "Separates observed facts from hypotheses and gives calibrated confidence."
+        "States that it cannot preserve or inspect trace, logs or screenshots that were not supplied; asks that original artifacts be retained and provided.",
+        "Separates the observed retry-pass/intermittent symptom from a root-cause conclusion, which remains UNKNOWN without evidence.",
+        "Requests relevant run metadata, trace, logs, screenshots, environment and reproduction details.",
+        "Proposes a proportionate investigation without claiming reproduction or diagnosis.",
+        "Does not modify tests or suppress retries merely to hide the failure."
       ],
       "fixture": null
     }

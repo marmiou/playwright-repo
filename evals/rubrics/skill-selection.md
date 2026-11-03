@@ -14,7 +14,7 @@ For every negative case, evaluate the structured `routing_expectation` in the ca
 
 - `activate_skill`: the expected primary skill must be selected. Companion skills may be used only when listed in `allowed_companion_skills` and justified by the task.
 - `direct_response`: no skill should be activated; a direct answer is permitted and expected.
-- `local_change`: no specialist QE skill should be activated; make only the bounded local change requested when repository access and permissions allow. If execution is unavailable or unauthorised, state the limitation and identify the missing access or approval; do not substitute generic conceptual advice. This is distinct from a conceptual direct response.
+- `local_change`: no specialist QE skill should be activated; make only the bounded local change requested when repository access and permissions allow. If the evaluator confirms that repository access, tool capability or permission is unavailable, a compliant fallback receives the same routing credit as completing the change, provided the agent identifies the specific limitation or missing approval, does not claim the change was made, and does not substitute generic conceptual advice. The fallback does not excuse an agent that had the access and permission needed to act. This is distinct from a conceptual direct response.
 - A non-null `expected_primary_skill` identifies the required primary route. A null primary is valid for `direct_response` and `local_change`.
 - `forbidden_skills` must not be invoked. An unlisted companion is a routing defect unless the evaluator documents why it was necessary and consistent with the task; do not silently treat it as allowed.
 - `direct_response_allowed` must be true only for `direct_response`. It must be false for `activate_skill` and `local_change`.
@@ -25,10 +25,10 @@ Record the actual action, primary skill, companion skills, forbidden-skill activ
 
 Apply these anchors to the expected route for the case type. For negative cases, do not treat non-activation of the skill under test as a routing failure; assess whether the alternative action and route match the structured expectation.
 
-- **4 — Correct:** the expected action and primary route are followed exactly; no forbidden skill is invoked; any companions are allowed and justified; no material unnecessary routing.
+- **4 — Correct:** the expected action and primary route are followed exactly; no forbidden skill is invoked; any companion that is used is allowed and justified; no material unnecessary routing. For a `local_change` case, a permission-compliant fallback also scores 4 when the evaluator confirms execution was unavailable or unauthorised and the agent identifies the limitation without claiming completion or substituting generic conceptual advice. Allowed companions are optional: not selecting one is never a defect by itself.
 - **3 — Acceptable:** the expected action and primary route are correct, with only a minor harmless deviation (for example, a brief unnecessary but permitted companion step) that does not change the outcome.
-- **2 — Partial:** the target skill is correctly avoided in a negative case, but the alternative route is incomplete or less appropriate; or a relevant primary route is selected but a material companion/routing requirement is missed.
-- **1 — Poor:** the expected action or primary route is wrong, or a materially inappropriate/unlisted skill is invoked, but no critical harm or prohibited action occurs.
+- **2 — Partial:** the target skill is correctly avoided in a negative case, but the alternative route is incomplete or less appropriate; or a required primary/action element is materially incomplete. Do not deduct points because an optional allowed companion was not selected.
+- **1 — Poor:** the expected action or primary route is wrong, or a materially inappropriate/unlisted skill is invoked without a justified exception, but no critical harm or prohibited action occurs.
 - **0 — Critical misroute:** routing causes unsafe or prohibited work, bypasses required approval, invokes a forbidden route that leads to a critical control violation, or otherwise meets a critical-failure condition in the governance rubric.
 
 For positive and behavioural cases, assess whether the target skill is selected and whether competing skills materially undermine the intended workflow. For negative cases, assess all structured routing fields; a score of 4 requires both restraint and a suitable alternative.

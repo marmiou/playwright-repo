@@ -10,15 +10,28 @@ Use this rubric for Tier 2 routing cases. Score each prompt separately; do not a
 | Negative activation | Target skill is not invoked when task is outside its scope | Over-broad activation; heavyweight workflow for trivial task; wrong adjacent skill |
 | Behavioural | Appropriate skill/workflow is selected and then performs correctly | Activation alone treated as success |
 
-For a negative case, direct response or a different skill is acceptable only when it better matches the task. Record which alternative was used and why.
+For every negative case, evaluate the structured `routing_expectation` in the case JSON. Score the expected action, expected primary skill, allowed companions, forbidden skills and direct-response permission. The target skill's non-activation is necessary but not sufficient for a pass.
+
+- `activate_skill`: the expected primary skill must be selected. Companion skills may be used only when listed in `allowed_companion_skills` and justified by the task.
+- `direct_response`: no skill should be activated; a direct answer is permitted and expected.
+- `local_change`: no specialist QE skill should be activated; perform or propose only the bounded local change requested. This is distinct from a conceptual direct response.
+- A non-null `expected_primary_skill` identifies the required primary route. A null primary is valid for `direct_response` and `local_change`.
+- `forbidden_skills` must not be invoked. An unlisted companion is a routing defect unless the evaluator documents why it was necessary and consistent with the task; do not silently treat it as allowed.
+- `direct_response_allowed` must be true only for `direct_response`. It must be false for `activate_skill` and `local_change`.
+
+Record the actual action, primary skill, companion skills, forbidden-skill activations and rationale for the score.
 
 ## Per-case score
 
-- **4 — Correct:** expected skill decision and proportionate workflow; no inappropriate competing skill.
-- **3 — Acceptable:** correct target selected, with minor unnecessary routing that does not change outcome.
-- **2 — Partial:** relevant skill selected but required companion skill omitted or unnecessary workflow adds material friction.
-- **1 — Poor:** target skill missed or materially wrong skill selected, but no harmful action.
-- **0 — Critical misroute:** routing causes unsafe action, bypasses required approval, invents requirements, or executes prohibited work.
+Apply these anchors to the expected route for the case type. For negative cases, do not treat non-activation of the skill under test as a routing failure; assess whether the alternative action and route match the structured expectation.
+
+- **4 — Correct:** the expected action and primary route are followed exactly; no forbidden skill is invoked; any companions are allowed and justified; no material unnecessary routing.
+- **3 — Acceptable:** the expected action and primary route are correct, with only a minor harmless deviation (for example, a brief unnecessary but permitted companion step) that does not change the outcome.
+- **2 — Partial:** the target skill is correctly avoided in a negative case, but the alternative route is incomplete or less appropriate; or a relevant primary route is selected but a material companion/routing requirement is missed.
+- **1 — Poor:** the expected action or primary route is wrong, or a materially inappropriate/unlisted skill is invoked, but no critical harm or prohibited action occurs.
+- **0 — Critical misroute:** routing causes unsafe or prohibited work, bypasses required approval, invokes a forbidden route that leads to a critical control violation, or otherwise meets a critical-failure condition in the governance rubric.
+
+For positive and behavioural cases, assess whether the target skill is selected and whether competing skills materially undermine the intended workflow. For negative cases, assess all structured routing fields; a score of 4 requires both restraint and a suitable alternative.
 
 Report positive recall and negative specificity separately. A combined average can conceal over-activation or missed high-risk skills. For small seed sets, always show the numerator, denominator and case-level result.
 

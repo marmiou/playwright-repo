@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0.0",
+  "skill": "add-web-test",
+  "source": {
+    "path": ".claude/skills/add-web-test/SKILL.md",
+    "description": ""
+  },
+  "cases": [
+    {
+      "id": "add-web-test-1",
+      "type": "positive",
+      "prompt": "Implement a Playwright UI test for the approved login acceptance criteria using existing repository patterns.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Inspects existing tests, fixtures, configuration and abstractions before proposing code.",
+        "Uses resilient user-facing locators and web-first assertions.",
+        "Places test and reusable abstractions in documented locations; avoids fixed sleeps."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "add-web-test-2",
+      "type": "positive",
+      "prompt": "The registration UI test is flaky because it clicks a button before the form is ready. Improve the test synchronisation without weakening assertions.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Uses locator/actionability or explicit observable readiness condition.",
+        "Does not add arbitrary waitForTimeout or blanket retries.",
+        "Preserves the original assertion intent and reports validation evidence honestly."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "add-web-test-3",
+      "type": "positive",
+      "prompt": "Add browser coverage for a multi-step checkout journey already specified in the linked acceptance criteria.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Uses the approved behaviour as oracle and inspects current framework conventions.",
+        "Covers user-visible outcomes and avoids API/page-object boundary leakage.",
+        "Defines isolated test data and cleanup strategy."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "add-web-test-4",
+      "type": "negative",
+      "prompt": "Write an API contract test for POST /orders; the OpenAPI contract is supplied.",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Selects add-api-test rather than browser UI automation."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "add-web-test-5",
+      "type": "negative",
+      "prompt": "Explain the difference between getByRole and locator('css=...'); do not change code.",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Answers directly without invoking implementation skill."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "add-web-test-6",
+      "type": "behavioral",
+      "prompt": "Fixture: an existing Playwright project has `tests/web`, `src/web`, and a page object with `getByRole('button',{name:'Pay'})`. Requirement: after valid payment, a confirmation heading with the order reference is shown. Implement a test; payment must not be triggered against production.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Uses a safe non-production environment/test fixture and refuses or blocks production payment execution.",
+        "Asserts visible confirmation and order reference, not merely button click or URL change.",
+        "Uses accessible locator and web-first assertion; no arbitrary sleep.",
+        "Uses existing page object only if appropriate and does not create needless abstraction.",
+        "Provides isolated test data, cleanup considerations and exact checks run; does not claim unrun checks."
+      ],
+      "fixture": null
+    }
+  ]
+}

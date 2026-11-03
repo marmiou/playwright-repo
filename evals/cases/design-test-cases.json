@@ -3,7 +3,7 @@
   "skill": "design-test-cases",
   "source": {
     "path": ".claude/skills/design-test-cases/SKILL.md",
-    "description": ""
+    "description": "Designs risk-based, traceable test scenarios and test cases from understood requirements and an agreed test strategy. Defines preconditions, data, actions, expected results, negative and boundary coverage, and automation suitability. Use before implementing or executing tests."
   },
   "cases": [
     {
@@ -50,7 +50,16 @@
       "expectations": [
         "Does not invent expected result; asks for authorised clarification or records provisional non-asserting scenario."
       ],
-      "fixture": null
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "analyze-requirement",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "design-test-cases"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "The cancellation policy is undecided, so expected behaviour must be clarified before asserting it."
+      }
     },
     {
       "id": "design-test-cases-5",
@@ -60,7 +69,16 @@
       "expectations": [
         "Does not implement tests; routes to add-api-test after design is available."
       ],
-      "fixture": null
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "add-api-test",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "design-test-cases"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "The request is implementation of already designed API scenarios."
+      }
     },
     {
       "id": "design-test-cases-6",
@@ -68,11 +86,11 @@
       "prompt": "Approved requirement: discount is 10% for carts of at least €100 before tax; discount is capped at €30; coupons cannot be combined. Design cases and show traceability.",
       "expected_routing": "activate",
       "expectations": [
-        "Covers just below/at/above €100 threshold and cap boundary around €300 cart value.",
-        "Covers coupon combination rejection and eligible single coupon flow without inventing coupon rules.",
-        "Defines expected discounted amounts correctly, clarifies rounding/tax order only if unspecified.",
+        "Covers just below/at/above €100 threshold and the €30 discount cap boundary around €300 cart value.",
+        "Covers coupon combination rejection and eligible single-coupon flow without inventing coupon eligibility rules.",
+        "Calculates the discount before tax as explicitly specified; asks about rounding precision only if it is not specified.",
         "Provides requirement-to-case mapping and distinct observable expected results.",
-        "Avoids redundant cases and labels unresolved policy questions."
+        "Avoids redundant cases and labels genuinely unresolved policy questions."
       ],
       "fixture": null
     }

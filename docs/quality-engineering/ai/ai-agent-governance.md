@@ -17,8 +17,14 @@ AI agents operating within this repository MUST follow these principles:
 - **Transparency:** AI-generated or AI-assisted work must be identifiable when relevant to review and accountability.
 - **Least privilege:** Agents should receive only the access and permissions necessary for their assigned tasks.
 - **Independent verification:** AI-generated changes must undergo appropriate verification and review.
+- **Clear responsibilities:** Each agent and skill has a defined purpose, scope, inputs, outputs and escalation boundary; overlapping responsibilities must be explicit.
+- **Isolated execution:** Agent actions are limited to the repository, environment, tools and permissions granted for the task; production and destructive operations require explicit authorised controls.
+- **Human decision authority:** Agents assist engineers and SDETs; they do not replace human judgement or assume product, security, privacy, governance or release authority.
+- **No self-approval or self-merge:** An agent must not approve or merge its own changes. Required review and approval remain with appropriately authorised humans.
 
 ## 3. Agent Responsibilities
+
+AI agents are assistants to engineers and SDETs, not autonomous replacements for accountable engineering roles. Workflows MUST define role boundaries, isolate execution to the minimum necessary permissions, and preserve human review and decision authority.
 
 AI agents may support activities such as:
 
@@ -43,7 +49,8 @@ AI agents MUST NOT independently:
 - Invent expected behaviour when authoritative information is missing.
 - Weaken assertions, quality gates or verification standards to obtain passing results.
 - Hide, suppress or misrepresent failures.
-- Approve their own work where independent review is required.
+- Approve their own work or represent self-review as independent approval.
+- Merge their own changes or bypass required human review and approval.
 - Grant themselves additional permissions or responsibilities.
 - Modify governance rules without authorised approval.
 - Perform unauthorised destructive operations.
@@ -82,7 +89,7 @@ A successful automated check alone does not establish that a change is correct o
 
 The Maker–Checker controls are defined in:
 
-`../governance/maker-checker-and-independent-review.md`
+`../governance/maker-checker.md`
 
 ## 7. Security and Data Protection
 
@@ -142,7 +149,7 @@ Improvements must preserve existing quality controls and undergo appropriate rev
 ## 11. Related Guidance
 
 - `ai-assisted-quality-engineering.md`
-- `../governance/maker-checker-and-independent-review.md`
+- `../governance/maker-checker.md`
 - `../governance/requirements-integrity-and-product-ownership.md`
 - `../engineering-practices/continuous-improvement.md`
 - `../../AGENTS.md`

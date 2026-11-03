@@ -2,7 +2,7 @@
 
 Assess the actual output or artifact against the original task, authoritative requirements and repository evidence. Do not score whether a skill activated; routing is assessed separately in `skill-selection.md`. Do not award credit for confident wording, plausible intent or unverified claims.
 
-Apply the dimensions below to each behavioural case. Before scoring, identify which case expectations and dimensions are mandatory for that case. Use the case's stated expectations as the primary scope; do not invent additional acceptance criteria during evaluation.
+Apply the dimensions below to each behavioural case. All case expectations are mandatory for the current seed cases. Correctness is mandatory for every behavioural case and must never be marked N/A. If evidence needed to assess Correctness is unavailable, mark it NE and identify the missing evidence. Before scoring other dimensions, identify which are applicable and mandatory for that case. Use the case's stated expectations as the primary scope; do not invent additional acceptance criteria during evaluation.
 
 ## Rating scale
 
@@ -114,6 +114,7 @@ Do not infer that a criterion passed because a related criterion passed. Cite th
 ## N/A and NE controls
 
 - Use **N/A** only when the dimension is genuinely outside the case's scope. Example: repository convention compliance may be N/A for a purely conceptual explanation that requests no repository inspection or change.
+- **Correctness must never be N/A.** It is mandatory in every behavioural case. If correctness cannot be judged because required evidence is missing, use NE, not N/A.
 - Do not use N/A merely because the executor omitted the work, lacked skill, or failed to obtain evidence.
 - Use **NE** when the evidence needed to judge a relevant dimension is missing, inaccessible or not supplied. Identify the missing evidence and who or what must provide it.
 - If a case-mandatory expectation is NOT ASSESSABLE, or a mandatory dimension is NE, the case cannot receive an unqualified PASS; its overall disposition must be considered BLOCKED by the verdict rules.
@@ -126,7 +127,7 @@ For dimensions scored 0–4, calculate:
 
 `weighted score = 100 × Σ((dimension score ÷ 4) × dimension weight) ÷ Σ(applicable dimension weights)`
 
-Exclude N/A and NE dimensions from both numerator and denominator. Report the applicable weight total alongside the score so readers can see how much of the rubric was assessed. Round to one decimal place. If no dimensions are scoreable, report **NO SCORE**.
+Exclude N/A and NE dimensions from both numerator and denominator. Report the applicable weight total (out of 100) and coverage percentage alongside the score so readers can see how much of the rubric was assessed. Coverage is the sum of weights for scoreable dimensions; it is not a pass threshold. Identify excluded dimensions and their N/A/NE reasons. Do not compare scores as if equivalent when their coverage materially differs. Round the score and coverage to one decimal place. If no dimensions are scoreable, report **NO SCORE**.
 
 The weighted score is descriptive evidence, not a verdict by itself. Do not use a numerical threshold here to override failed mandatory expectations or governance checks. The overall case verdict and governance precedence are defined in the evaluation protocol, not by this rubric alone.
 

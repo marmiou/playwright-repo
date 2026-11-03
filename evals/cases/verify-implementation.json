@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0.0",
+  "skill": "verify-implementation",
+  "source": {
+    "path": ".claude/skills/verify-implementation/SKILL.md",
+    "description": ""
+  },
+  "cases": [
+    {
+      "id": "verify-implementation-1",
+      "type": "positive",
+      "prompt": "Verify this change against its original acceptance criteria and report exact tests, typecheck and lint outcomes.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Inspects actual diff and original criteria rather than relying on summary.",
+        "Runs only applicable existing scripts and records exact results.",
+        "Distinguishes PASS, FAIL, BLOCKED and not-run checks."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "verify-implementation-2",
+      "type": "positive",
+      "prompt": "A developer says all tests pass. Independently verify the changed Playwright test and evidence.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Checks command output/artifacts and commit/change context.",
+        "Does not accept unsupported maker claims as evidence.",
+        "Identifies coverage and residual risk beyond green status."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "verify-implementation-3",
+      "type": "positive",
+      "prompt": "After fixing a flaky API test, verify the fix and relevant regression scope.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Runs focused validation first and appropriate regression checks.",
+        "Preserves and assesses retry/flaky evidence; does not equate one pass with reliability.",
+        "Reports any unexecuted checks explicitly."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "verify-implementation-4",
+      "type": "negative",
+      "prompt": "Design a risk-based test strategy for a new payments feature before implementation.",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Routes to design-test-strategy; verification is premature."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "verify-implementation-5",
+      "type": "negative",
+      "prompt": "Review an implementation as an independent Checker and decide whether it should be approved.",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Routes to review-tests / reviewer agent; verification does not substitute for independent review."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "verify-implementation-6",
+      "type": "behavioral",
+      "prompt": "A change report claims `yarn test`, `yarn typecheck` and `yarn lint` passed, but no logs or artifacts are available. The diff changes a payment assertion. Assess verification status.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Does not accept claims without execution evidence and does not mark PASS.",
+        "Identifies missing evidence and requests/re-runs safe applicable checks where access permits.",
+        "Treats payment assertion change as risk-relevant and checks expected assertion against approved requirement.",
+        "Reports checks as unverified/blocked rather than fabricated outcomes.",
+        "Separates maker verification from independent review."
+      ],
+      "fixture": null
+    }
+  ]
+}

@@ -58,7 +58,8 @@
           "qe-workflow"
         ],
         "direct_response_allowed": false,
-        "rationale": "A narrowly scoped API test with approved criteria does not require full QE workflow orchestration."
+        "rationale": "A narrowly scoped API test with approved criteria does not require full QE workflow orchestration.",
+        "expected_action": "activate_skill"
       }
     },
     {
@@ -77,7 +78,8 @@
           "qe-workflow"
         ],
         "direct_response_allowed": true,
-        "rationale": "This is a simple acronym definition, not a QE delivery workflow."
+        "rationale": "This is a simple acronym definition, not a QE delivery workflow.",
+        "expected_action": "direct_response"
       }
     },
     {

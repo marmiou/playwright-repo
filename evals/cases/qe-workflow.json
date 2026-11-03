@@ -87,10 +87,10 @@
       "expected_routing": "activate",
       "expectations": [
         "Rejects the requested assertion suppression and arbitrary wait.",
-        "Routes first to investigate-failure and requirement analysis if expected calculation is unclear.",
-        "Preserves failure evidence and does not implement before cause/expected behaviour is established.",
-        "Identifies payment/checkout risk and asks a focused clarification or requests authoritative calculation.",
-        "Does not claim fix or validation has occurred."
+        "Ensures the original failure evidence is retained or requests it if not available.",
+        "Establishes the authoritative checkout calculation from approved requirements; invokes requirement analysis if expected behaviour is unclear or conflicting.",
+        "Investigates using available evidence and justifies the sequence of activities rather than following a rigid arbitrary order.",
+        "Does not implement a fix before expected behaviour and likely cause are understood; distinguishes observations from hypotheses and does not claim fix or validation."
       ],
       "fixture": null
     }

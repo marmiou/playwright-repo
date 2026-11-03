@@ -50,7 +50,16 @@
       "expectations": [
         "Selects add-web-test when browser behaviour is the target."
       ],
-      "fixture": null
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "add-web-test",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "add-api-test"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "The requested coverage is browser UI behaviour, not service/API behaviour."
+      }
     },
     {
       "id": "add-api-test-5",
@@ -60,7 +69,16 @@
       "expectations": [
         "Does not invent contract; asks for authoritative contract/clarification and blocks unsupported assertions."
       ],
-      "fixture": null
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "analyze-requirement",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "add-api-test"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "The expected contract and status semantics are not defined; clarify behaviour before implementing an API test."
+      }
     },
     {
       "id": "add-api-test-6",

@@ -58,7 +58,8 @@
           "design-test-cases"
         ],
         "direct_response_allowed": false,
-        "rationale": "The cancellation policy is undecided, so expected behaviour must be clarified before asserting it."
+        "rationale": "The cancellation policy is undecided, so expected behaviour must be clarified before asserting it.",
+        "expected_action": "activate_skill"
       }
     },
     {
@@ -77,7 +78,8 @@
           "design-test-cases"
         ],
         "direct_response_allowed": false,
-        "rationale": "The request is implementation of already designed API scenarios."
+        "rationale": "The request is implementation of already designed API scenarios.",
+        "expected_action": "activate_skill"
       }
     },
     {

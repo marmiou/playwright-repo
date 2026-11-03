@@ -3,7 +3,7 @@
   "skill": "add-api-test",
   "source": {
     "path": ".claude/skills/add-api-test/SKILL.md",
-    "description": ""
+    "description": "Adds or updates API tests in this repository using its established API clients, fixtures, contracts, data strategy and reporting. Use when implementing automated service or HTTP contract coverage for understood and designed requirements."
   },
   "cases": [
     {

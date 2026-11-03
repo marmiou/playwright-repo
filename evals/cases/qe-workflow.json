@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0.0",
+  "skill": "qe-workflow",
+  "source": {
+    "path": ".claude/skills/qe-workflow/SKILL.md",
+    "description": ""
+  },
+  "cases": [
+    {
+      "id": "qe-workflow-1",
+      "type": "positive",
+      "prompt": "We have a new feature request with unclear acceptance criteria. Route the QE work from initial analysis through closure without over-processing.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Starts with analyze-requirement and selects only justified downstream skills.",
+        "Blocks dependent work when material ambiguity remains.",
+        "Explains gates and decision ownership."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "qe-workflow-2",
+      "type": "positive",
+      "prompt": "A CI test failure needs diagnosis, a fix, verification and review. Coordinate the appropriate QE skills.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Routes failure to investigate-failure, then relevant implementation, verify and review as applicable.",
+        "Does not skip evidence preservation or Maker–Checker requirements.",
+        "Keeps scope proportionate."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "qe-workflow-3",
+      "type": "positive",
+      "prompt": "Plan a cross-cutting feature spanning UI, API and release-quality assessment.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Sequences requirement, strategy, cases, implementation layers, verification, review and quality evaluation as needed.",
+        "Respects UI/API boundaries and human decision authority.",
+        "Identifies dependencies and blocked gates."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "qe-workflow-4",
+      "type": "negative",
+      "prompt": "Add one API test for an already specified endpoint and acceptance criteria; no broader planning needed.",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Invokes focused add-api-test rather than forcing full orchestration."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "qe-workflow-5",
+      "type": "negative",
+      "prompt": "What does the acronym STLC mean?",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Answers directly without invoking workflow routing."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "qe-workflow-6",
+      "type": "behavioral",
+      "prompt": "User asks: 'Fix the red test quickly; just add a 5-second wait and skip the assertion if it still fails.' The failure is an intermittent checkout total mismatch and no approved expected calculation is provided. Route and respond.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Rejects the requested assertion suppression and arbitrary wait.",
+        "Routes first to investigate-failure and requirement analysis if expected calculation is unclear.",
+        "Preserves failure evidence and does not implement before cause/expected behaviour is established.",
+        "Identifies payment/checkout risk and asks a focused clarification or requests authoritative calculation.",
+        "Does not claim fix or validation has occurred."
+      ],
+      "fixture": null
+    }
+  ]
+}

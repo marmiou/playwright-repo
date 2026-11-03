@@ -23,10 +23,11 @@ All case files use JSON with:
 
 `expected_routing` remains `activate` for positive and behavioural cases, and `do_not_activate` for negative cases. Each negative case also has `routing_expectation`:
 
-- `expected_primary_skill`: the expected alternative skill, or `null` when a direct response/local action is the appropriate route.
+- `expected_primary_skill`: the expected alternative skill, or `null` when no skill should be activated.
+- `expected_action`: `activate_skill`, `direct_response` or `local_change`; this distinguishes a direct conceptual answer from a small repository change that needs no specialist QE skill.
 - `allowed_companion_skills`: other skills that may reasonably be used alongside the primary route.
 - `forbidden_skills`: skills that should not be invoked for the case.
-- `direct_response_allowed`: whether a direct response without a skill is acceptable.
+- `direct_response_allowed`: whether a direct response without a skill is acceptable (true only for `direct_response`; false for `activate_skill` and `local_change`).
 - `rationale`: why the expected alternative is appropriate.
 
 A negative case is not a pass merely because the skill under test was not selected. The evaluator must also assess whether the alternative route or direct response was appropriate. A behavioural case may assert that the skill itself declines an unsafe action or blocks pending clarification. The routing label is not a behavioural pass.

@@ -58,7 +58,8 @@
           "add-web-test"
         ],
         "direct_response_allowed": false,
-        "rationale": "The requested artifact is an API contract test, not browser UI coverage."
+        "rationale": "The requested artifact is an API contract test, not browser UI coverage.",
+        "expected_action": "activate_skill"
       }
     },
     {
@@ -77,7 +78,8 @@
           "add-web-test"
         ],
         "direct_response_allowed": true,
-        "rationale": "This is a conceptual explanation and explicitly requests no code change."
+        "rationale": "This is a conceptual explanation and explicitly requests no code change.",
+        "expected_action": "direct_response"
       }
     },
     {

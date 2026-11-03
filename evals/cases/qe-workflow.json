@@ -3,7 +3,7 @@
   "skill": "qe-workflow",
   "source": {
     "path": ".claude/skills/qe-workflow/SKILL.md",
-    "description": ""
+    "description": "Routes Quality Engineering tasks through the appropriate requirements, risk assessment, test design, automation, verification, investigation, review, and improvement skills. Use when starting a QA task, feature, bug investigation, test automation request, or quality assessment in this repository."
   },
   "cases": [
     {
@@ -50,7 +50,16 @@
       "expectations": [
         "Invokes focused add-api-test rather than forcing full orchestration."
       ],
-      "fixture": null
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "add-api-test",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "qe-workflow"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "A narrowly scoped API test with approved criteria does not require full QE workflow orchestration."
+      }
     },
     {
       "id": "qe-workflow-5",
@@ -60,7 +69,16 @@
       "expectations": [
         "Answers directly without invoking workflow routing."
       ],
-      "fixture": null
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": null,
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "qe-workflow"
+        ],
+        "direct_response_allowed": true,
+        "rationale": "This is a simple acronym definition, not a QE delivery workflow."
+      }
     },
     {
       "id": "qe-workflow-6",

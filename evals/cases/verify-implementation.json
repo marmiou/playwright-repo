@@ -50,7 +50,16 @@
       "expectations": [
         "Routes to design-test-strategy; verification is premature."
       ],
-      "fixture": null
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "design-test-strategy",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "verify-implementation"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "The request is to plan verification coverage, not verify an existing change."
+      }
     },
     {
       "id": "verify-implementation-5",
@@ -60,7 +69,16 @@
       "expectations": [
         "Routes to review-tests / reviewer agent; verification does not substitute for independent review."
       ],
-      "fixture": null
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "review-tests",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "verify-implementation"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "The request is an independent assessment of test quality, not execution verification."
+      }
     },
     {
       "id": "verify-implementation-6",
@@ -68,11 +86,11 @@
       "prompt": "A change report claims `yarn test`, `yarn typecheck` and `yarn lint` passed, but no logs or artifacts are available. The diff changes a payment assertion. Assess verification status.",
       "expected_routing": "activate",
       "expectations": [
-        "Does not accept claims without execution evidence and does not mark PASS.",
-        "Identifies missing evidence and requests/re-runs safe applicable checks where access permits.",
-        "Treats payment assertion change as risk-relevant and checks expected assertion against approved requirement.",
-        "Reports checks as unverified/blocked rather than fabricated outcomes.",
-        "Separates maker verification from independent review."
+        "States that verification is BLOCKED because neither the implementation diff nor the authoritative approved payment requirement is supplied.",
+        "Requests the actual diff/change and the approved requirement or acceptance criteria needed for comparison.",
+        "Does not infer correctness from a summary or claim tests, static checks or review were executed.",
+        "Explains the minimum proportionate checks that can be performed once the missing inputs are available.",
+        "Reports the evidence gap and avoids a PASS or FAIL conclusion unsupported by evidence."
       ],
       "fixture": null
     }

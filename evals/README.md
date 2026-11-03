@@ -14,12 +14,16 @@ The ten evaluated skills are `analyze-requirement`, `design-test-strategy`, `des
 
 ## Case schema
 
-All case files use JSON with:
+All case files are defined by [`schemas/case.schema.json`](schemas/case.schema.json), using JSON Schema Draft 2020-12. The schema validates the per-file structure, required fields, enums, routing-action relationships, the six-case composition (3 positive, 2 negative, 1 behavioural), and exactly five expectations for the behavioural seed case.
+
+The case file contains:
 
 - `schema_version`: schema version for this dataset.
 - `skill`: skill name under test.
 - `source.path` and `source.description`: the exact skill instruction location and description under evaluation. Keep the description synchronised with the skill's frontmatter.
 - `cases[]`: stable `id`, `type`, verbatim `prompt`, `expected_routing`, observable `expectations[]` and optional `fixture`.
+
+The JSON Schema cannot by itself enforce dataset-wide or repository-dependent rules. The future Tier 1 validator must additionally check unique case IDs across files, filename/skill identity, exact source-description synchronisation, target-skill exclusion in negative cases, disjoint allowed/forbidden skill lists, and fixture-path resolution.
 
 `expected_routing` remains `activate` for positive and behavioural cases, and `do_not_activate` for negative cases. Each negative case also has `routing_expectation`:
 
@@ -39,9 +43,10 @@ Fixtures are optional. Keep them synthetic, minimal, deterministic, and clearly 
 ### Tier 1 — Structural (deterministic, no model)
 
 Manually or with a future lightweight validator check:
-- Every skill has exactly three positive, two negative and one behavioural case.
-- Case IDs are unique within the dataset; required fields and allowed enums are valid JSON.
-- Skill name, source path and source description match the current repository.
+- Validate each case file against `schemas/case.schema.json` (Draft 2020-12).
+- Check exactly ten skill files, with three positive, two negative and one behavioural case per file.
+- Check case IDs are unique across the entire dataset.
+- Check filename/skill identity and source path/description synchronisation with the current repository.
 - Negative routing metadata is complete and internally consistent.
 - Expectations are observable and case-specific, not generic praise.
 - Fixture references resolve; fixtures contain no secrets or real personal data.

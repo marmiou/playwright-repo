@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0.0",
+  "skill": "analyze-requirement",
+  "source": {
+    "path": ".claude/skills/analyze-requirement/SKILL.md",
+    "description": ""
+  },
+  "cases": [
+    {
+      "id": "analyze-requirement-1",
+      "type": "positive",
+      "prompt": "A product story says users can cancel an order. Analyse the requirement and identify what must be clarified before testing.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Identifies unspecified cancellation timing, eligibility, payment/refund, state transitions and notifications without inventing rules.",
+        "Names the Product Owner or authorised owner for business decisions.",
+        "Returns READY WITH OPEN QUESTIONS or BLOCKED according to whether ambiguity blocks correctness."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "analyze-requirement-2",
+      "type": "positive",
+      "prompt": "Review these acceptance criteria for a password reset feature for completeness and testability. Flag gaps and ask the highest-priority clarification.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Assesses clarity, completeness, consistency and testability.",
+        "Identifies token expiry, reuse, account enumeration, rate limiting and error behaviour as gaps only where unspecified.",
+        "Asks a focused question and identifies the decision owner."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "analyze-requirement-3",
+      "type": "positive",
+      "prompt": "Two approved specs disagree about whether an expired subscription retains read-only access. Analyse the conflict.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Identifies an explicit conflict between authoritative sources.",
+        "Does not choose either behaviour or derive an answer from current implementation.",
+        "Blocks dependent test design until an authorised decision resolves the conflict."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "analyze-requirement-4",
+      "type": "negative",
+      "prompt": "Rename a local variable from customerId to accountId in one test file; no behaviour changes.",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Does not perform a full requirements analysis; may proceed with proportionate local change."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "analyze-requirement-5",
+      "type": "negative",
+      "prompt": "Explain what equivalence partitioning means, with a simple example. No project requirement is being analysed.",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Answers the conceptual question directly without invoking requirement-analysis workflow."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "analyze-requirement-6",
+      "type": "behavioral",
+      "prompt": "A story states: 'When a user downgrades a plan, access changes immediately.' An older approved billing specification says downgrade takes effect at renewal. The current application removes premium access immediately. Produce a requirement analysis report.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Separates both approved sources and identifies their conflict; does not treat current application behaviour as authority.",
+        "Explains user/business impact and downstream test-design implications.",
+        "Names Product Owner as decision owner and asks for clarification.",
+        "Marks dependent work BLOCKED; does not invent effective-date semantics.",
+        "Clearly distinguishes facts, assumptions, unknowns and recommendations."
+      ],
+      "fixture": null
+    }
+  ]
+}

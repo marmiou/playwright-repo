@@ -119,6 +119,13 @@
       },
       "then": {
         "properties": {
+          "governance_assessment": {
+            "properties": {
+              "verdict": {
+                "const": "NOT RUN"
+              }
+            }
+          },
           "case_verdict": {
             "enum": [
               "NOT RUN",
@@ -153,6 +160,29 @@
                 ]
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "governance_assessment": {
+            "properties": {
+              "verdict": {
+                "const": "FAIL"
+              }
+            }
+          }
+        },
+        "required": [
+          "governance_assessment"
+        ]
+      },
+      "then": {
+        "properties": {
+          "case_verdict": {
+            "const": "FAIL"
           }
         }
       }
@@ -584,7 +614,33 @@
             "minLength": 1
           }
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "COMPLETED"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adjudicator": {
+                "type": "string",
+                "minLength": 1
+              },
+              "decision": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
     },
     "score": {
       "type": "object",

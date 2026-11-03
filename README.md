@@ -1,43 +1,57 @@
-# Playwright Automation Framework
+# AI-Assisted Quality Engineering Framework
 
-A TypeScript-based test automation framework built with Playwright, designed to support web UI and API testing, with a future extension for native mobile automation using Appium.
+A TypeScript automation framework using Playwright for web UI and API testing, supported by a risk-based Quality Engineering approach and governed AI-assisted development workflows.
 
-The project focuses on maintainability, reusability, scalability, and clear separation of responsibilities.
+The project combines the Software Testing Life Cycle (STLC)—requirements, risk assessment, test design, execution and evaluation—with the Software Development Life Cycle (SDLC)—architecture, implementation, review and maintenance.
+
+The objective is not simply to generate tests. It is to build reliable, maintainable automation that provides meaningful product-quality feedback while keeping decisions evidence-based and human-accountable.
+
+> **Status:** The automation foundation, architecture boundaries and shared AI-agent instructions are established. The reusable skills and specialist-agent workflows are being developed incrementally. Documented or planned capabilities should not be interpreted as completed implementations.
 
 ---
 
-## Table of Contents
+## Contents
 
+- [Objectives](#objectives)
 - [Technology Stack](#technology-stack)
-- [Prerequisites](#prerequisites)
-- [Environment Setup](#environment-setup)
-- [Getting Started](#getting-started)
+- [Current Status](#current-status)
+- [Quality Engineering Workflow](#quality-engineering-workflow)
+- [AI Assistance and Governance](#ai-assistance-and-governance)
 - [Project Structure](#project-structure)
+- [Prerequisites and Setup](#prerequisites-and-setup)
 - [Running Tests](#running-tests)
 - [Code Quality](#code-quality)
 - [Test Reporting](#test-reporting)
-- [Test Strategy](#test-strategy)
-- [CI/CD](#cicd)
-- [Git Workflow & Commit Conventions](#git-workflow--commit-conventions)
-- [Future Improvements](#future-improvements)
+- [Configuration and Security](#configuration-and-security)
+- [Native Mobile Automation](#native-mobile-automation)
+- [Git Workflow](#git-workflow)
+- [Roadmap](#roadmap)
 
----
+## Objectives
+
+- Build maintainable web UI and API automation with Playwright and TypeScript.
+- Keep web, API, shared and future native mobile responsibilities separate.
+- Derive test coverage from requirements, acceptance criteria and risk.
+- Prefer independent, deterministic tests with meaningful assertions.
+- Use AI to assist analysis, design, implementation and review without delegating human accountability.
+- Make implementation decisions traceable to acceptance criteria and validation evidence.
 
 ## Technology Stack
 
 | Technology | Purpose |
 |---|---|
 | Node.js | JavaScript runtime |
-| TypeScript | Primary programming language |
+| TypeScript | Primary language |
 | Yarn 4 | Package manager |
 | Playwright | Web UI and API automation |
-| ESLint | Static code analysis |
+| ESLint | Static analysis |
 | Prettier | Code formatting |
-| Allure | Test reporting |
-| GitHub Actions | CI/CD |
-| dotenv | Environment configuration |
+| Allure Playwright | Test reporting |
+| dotenv | Environment-variable loading support |
+| GitHub Actions | CI automation (where configured) |
+| Claude Code | AI-assisted engineering |
 
-### Current versions
+### Current dependency versions
 
 | Tool | Version |
 |---|---|
@@ -49,462 +63,348 @@ The project focuses on maintainability, reusability, scalability, and clear sepa
 | Prettier | 3.8.1 |
 | Allure Playwright | 3.4.5 |
 
----
+Dependency declarations are maintained in `package.json` and `yarn.lock`.
 
-## Prerequisites
+## Current Status
 
-Before setting up the project, make sure you have:
+| Area | Status |
+|---|---|
+| Playwright / TypeScript foundation | Configured |
+| Chromium, Firefox and WebKit projects | Configured |
+| Web test directory | Established at `tests/web/` |
+| API test directory | Established at `tests/api/`; coverage is evolving |
+| Source boundaries | `src/web/`, `src/api/`, `src/shared/`, `src/fixtures/` |
+| Type checking and linting | Configured |
+| HTML and Allure reporting | Configured |
+| Shared QE and agent instructions | Defined in `AGENTS.md` |
+| Claude Code instructions | Defined in `CLAUDE.md` |
+| Maker–Checker governance | Defined; operational reviewer workflow is in progress |
+| Reusable skills and specialist agents | In progress |
+| Native mobile automation | Future independent Appium implementation |
 
-- Node.js 24 or later
-- Yarn 4
-- Git
-- An IDE (Visual Studio Code or IntelliJ IDEA recommended)
+A directory or documented workflow does not, by itself, indicate a complete implementation or test suite. The executable code and tests in the repository are the source of truth for implementation status.
 
-### Installing Homebrew (macOS)
+## Quality Engineering Workflow
 
-Homebrew is a package manager for macOS that simplifies installing and managing development tools.
+The workflow is risk-based and proportionate to the task. Not every change requires every phase.
 
-If Homebrew is not already installed, run:
+1. **Requirement analysis**
+   - Understand the objective, scope and acceptance criteria.
+   - Identify ambiguity, assumptions, dependencies and constraints.
+   - Ask for clarification when missing information materially affects correctness.
+   - Do not invent business rules or expected behaviour.
 
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
+2. **Test planning and risk assessment**
+   - Identify relevant test levels and types.
+   - Prioritise scenarios by likelihood, impact and risk.
+   - Identify environments, dependencies and test-data needs.
+   - Define the evidence needed to demonstrate acceptance.
 
-Verify the installation:
+3. **Test design**
+   - Derive scenarios from requirements and risks.
+   - Define preconditions, actions and observable expected outcomes.
+   - Consider positive, negative, boundary, edge and failure paths.
+   - Maintain requirement-to-test traceability where useful.
 
-```bash
-brew --version
-```
+4. **Automation design and implementation**
+   - Inspect existing architecture, fixtures and conventions.
+   - Keep web and API concerns separate.
+   - Use resilient locators, meaningful assertions and typed models.
+   - Keep tests readable, independent and deterministic.
+   - Avoid arbitrary waits, duplicated logic and unnecessary abstractions.
 
-### Installing Node.js
+5. **Verification**
+   - Run targeted tests and applicable regression tests.
+   - Run TypeScript checks and ESLint where relevant.
+   - Inspect failures, traces and reports.
+   - Distinguish product defects from automation and environment failures.
+   - Never report a check as passed unless it was actually run and passed.
 
-Install Node.js using Homebrew:
+6. **Independent review — Maker–Checker**
+   - **Maker:** analyses, designs and implements the agreed change, then reports evidence and limitations.
+   - **Checker:** independently inspects the implementation against the original task and acceptance criteria.
+   - The Checker evaluates correctness, coverage, assertions, maintainability, reliability, security and validation evidence.
+   - A self-review in the same working context must not be represented as independent verification.
 
-```bash
-brew install node
-```
+   Review outcomes:
 
-Verify the installation:
+   | Outcome | Meaning |
+   |---|---|
+   | PASS | Mandatory criteria and applicable quality checks are satisfied |
+   | FAIL | One or more criteria are not satisfied; actionable findings are provided |
+   | BLOCKED | Review cannot be completed because requirements, access or dependencies are missing |
 
-```bash
-node -v
-npm -v
-```
+   After corrections, the changed implementation is reviewed again.
 
-### Installing Yarn 4
+7. **Quality evaluation and closure**
+   - Confirm which acceptance criteria have been met.
+   - Report remaining risks, gaps and limitations.
+   - Identify flaky tests, automation defects and improvement opportunities.
+   - Close the task only when its applicable Definition of Done is satisfied.
 
-Enable Corepack:
+## AI Assistance and Governance
 
-```bash
-corepack enable
-```
+AI is an engineering assistant, not an authority on product behaviour or a replacement for human accountability.
 
-Activate the required Yarn version:
+- `AGENTS.md` contains shared engineering principles, architecture boundaries, the QE lifecycle, Maker–Checker expectations and Definition of Done.
+- `CLAUDE.md` contains Claude Code-specific working instructions and imports the shared instructions from `AGENTS.md`.
+- Reusable skills and specialist agents are being developed to operationalise the workflow without duplicating governance rules.
 
-```bash
-corepack prepare yarn@4.18.1 --activate
-```
+Core principles:
 
-Verify:
-
-```bash
-yarn -v
-```
-
-The expected version is:
-
-```text
-4.18.1
-```
-
----
-
-## Environment Setup
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/marmiou/playwright-repo.git
-```
-
-Navigate into the project:
-
-```bash
-cd playwright-repo
-```
-
-### 2. Install dependencies
-
-```bash
-yarn install
-```
-
-### 3. Install Playwright browsers
-
-```bash
-yarn playwright install
-```
-
-This installs the browsers configured in the Playwright project:
-
-- Chromium
-- Firefox
-- WebKit
-
-For Linux environments, install the required browser system dependencies as well:
-
-```bash
-yarn playwright install --with-deps
-```
-
-### 4. Verify the installation
-
-List the available tests:
-
-```bash
-yarn test --list
-```
-
-Run the test suite:
-
-```bash
-yarn test
-```
-
----
+- Requirements first; do not invent business rules.
+- Human accountability for scope, risk acceptance and decisions.
+- Evidence over assumptions; disclose unrun checks and limitations.
+- Independent verification for meaningful implementation tasks.
+- Least privilege for tools, agents and external systems.
+- Quality over test count; prioritise meaningful coverage.
+- Never hide failures, weaken assertions or add arbitrary retries and waits just to obtain a passing result.
 
 ## Project Structure
 
-Current repository structure:
-
 ```text
 playwright-repo/
-│
-├── .github/
-│   └── workflows/
-│       └── playwright.yml
-│
+├── AGENTS.md
+├── CLAUDE.md
+├── docs/
+│   ├── architecture/
+│   └── quality-engineering/
+├── mobile/
 ├── src/
+│   ├── api/
 │   ├── fixtures/
-│   ├── pages/
-│   └── utils/
-│
+│   ├── shared/
+│   └── web/
 ├── tests/
-│   └── example.spec.ts
-│
-├── .editorconfig
-├── .gitignore
-├── .yarnrc.yml
+│   ├── api/
+│   └── web/
 ├── eslint.config.mjs
 ├── package.json
 ├── playwright.config.ts
 ├── tsconfig.json
 ├── yarn.lock
-├── README.md
-├── test-plan.md
-└── test-data-strategy.md
+└── README.md
 ```
 
-### Directory responsibilities
+Generated/local directories such as `node_modules/`, `test-results/`, `playwright-report/` and `allure-results/` are omitted.
 
-| Directory | Responsibility |
+| Path | Responsibility |
 |---|---|
-| `src/fixtures` | Reusable Playwright fixtures |
-| `src/pages` | Page Object Model implementation |
-| `src/utils` | Shared helper functions |
-| `tests` | Automated test scenarios |
-| `.github/workflows` | CI/CD workflows |
+| `src/web/` | Web page objects, components and supporting abstractions |
+| `src/api/` | API clients, models and supporting abstractions |
+| `src/shared/` | Utilities, data and configuration genuinely shared across layers |
+| `src/fixtures/` | Shared Playwright fixtures |
+| `tests/web/` | Web UI scenarios |
+| `tests/api/` | API scenarios |
+| `mobile/` | Reserved for independent native mobile automation |
+| `docs/architecture/` | Architecture and design documentation |
+| `docs/quality-engineering/` | QE strategy, governance and engineering guidance |
+| `AGENTS.md` | Shared instructions for agents and contributors |
+| `CLAUDE.md` | Claude Code-specific instructions |
 
-The current structure is the initial framework foundation. The directories will be expanded as the framework evolves.
+## Prerequisites and Setup
 
----
+Prerequisites:
+
+- Node.js 24.14.0 or a compatible Node.js 24 release
+- Yarn 4.18.1 through Corepack
+- Git
+- An IDE such as Visual Studio Code or IntelliJ IDEA
+
+On macOS, Node.js can be installed with Homebrew:
+
+```bash
+brew install node
+```
+
+Enable Corepack and activate the project Yarn version:
+
+```bash
+corepack enable
+corepack prepare yarn@4.18.1 --activate
+yarn --version
+```
+
+Clone the repository and install dependencies:
+
+```bash
+git clone https://github.com/marmiou/playwright-repo.git
+cd playwright-repo
+yarn install
+```
+
+Install Playwright browsers:
+
+```bash
+yarn playwright install
+```
+
+On Linux, install browser system dependencies too:
+
+```bash
+yarn playwright install --with-deps
+```
+
+Check test discovery and run the suite:
+
+```bash
+yarn test --list
+yarn test
+```
 
 ## Running Tests
 
-Playwright supports multiple browsers and execution modes.
-
-### Run all tests
+Run the full suite:
 
 ```bash
 yarn test
 ```
 
-### Run tests in a specific browser
-
-Chromium:
+Run a browser project:
 
 ```bash
 yarn test:chromium
-```
-
-Firefox:
-
-```bash
 yarn test:firefox
-```
-
-WebKit:
-
-```bash
 yarn test:webkit
 ```
 
-### Run tests in headed mode
+Run in headed, UI or debug mode:
 
 ```bash
 yarn test:headed
-```
-
-This opens the browser UI while tests are executing.
-
-### Run tests in UI mode
-
-```bash
 yarn test:ui
-```
-
-Playwright UI mode provides an interactive interface for exploring and debugging tests.
-
-### Run tests in debug mode
-
-```bash
 yarn test:debug
 ```
 
-This launches Playwright Inspector and allows step-by-step test execution.
+Run one test file (replace the example path as needed):
 
-### View the HTML report
+```bash
+yarn playwright test tests/web/example.spec.ts
+```
+
+Open the Playwright HTML report:
 
 ```bash
 yarn test:report
 ```
 
----
-
 ## Code Quality
 
-Code quality is maintained through TypeScript, ESLint, and Prettier.
-
-### TypeScript
-
-The project uses strict TypeScript settings to improve type safety and catch potential issues during development.
-
-Run type checking:
+TypeScript type checking:
 
 ```bash
 yarn typecheck
 ```
 
-### ESLint
-
-ESLint performs static code analysis and enforces consistent coding practices.
-
-Run linting:
+ESLint:
 
 ```bash
 yarn lint
-```
-
-Automatically fix supported issues:
-
-```bash
 yarn lint:fix
 ```
 
-### Prettier
-
-Prettier is used to maintain consistent code formatting.
-
-Format the project:
-
-```bash
-yarn prettier --write .
-```
-
-Check formatting without modifying files:
+Prettier formatting:
 
 ```bash
 yarn prettier --check .
+yarn prettier --write .
 ```
-
----
 
 ## Test Reporting
 
-The framework uses Allure Playwright for test reporting.
+The Playwright configuration enables the HTML reporter and Allure Playwright reporter.
 
-Allure collects test execution information and generates detailed reports containing test results, execution details, and failure information.
+- Playwright HTML report data is written to `playwright-report/`.
+- Allure result files are written to `allure-results/`.
 
-### Generate an Allure report
-
-After test execution, the results are stored in:
-
-```text
-allure-results/
-```
-
-To generate an HTML report using the Allure Commandline:
+Generate and open an Allure report with the Allure Commandline:
 
 ```bash
 yarn dlx allure-commandline generate allure-results --clean -o allure-report
-```
-
-Open the generated report:
-
-```bash
 yarn dlx allure-commandline open allure-report
 ```
 
-Note: Allure Commandline may require Java to be installed.
+The Allure Commandline may require Java. Report and result directories are generated execution artifacts, not source code.
 
----
+## Configuration and Security
 
-## Test Strategy
+The current `playwright.config.ts` configures:
 
-The framework follows a structured approach to test automation, focusing on maintainability, risk coverage, and reliable feedback.
+- `tests/` as the test discovery directory.
+- Chromium, Firefox and WebKit projects.
+- Parallel execution locally.
+- CI-aware retries and worker settings through the `CI` environment variable.
+- HTML and Allure reporters.
+- Trace collection on the first retry.
 
-The test strategy is documented in:
+The `dotenv` package is listed as a dependency, but loading an environment file is currently commented out in `playwright.config.ts`. Enable and document it when environment-based configuration is introduced.
 
-- `test-plan.md`
-- `test-data-strategy.md`
+Never commit credentials, tokens, `.env` files or authentication state. Use environment variables or an approved secret store for sensitive configuration. Do not access production systems or modify production data without explicit authorisation.
 
-These documents describe the testing approach, scope, test coverage, and test data management principles.
+## Native Mobile Automation
 
-### Planned testing layers
+Native mobile automation is intentionally separate from Playwright. The planned stack is Appium 3 with TypeScript, supporting Android and iOS applications, screen objects, mobile-specific fixtures and device execution.
 
-| Layer | Tool | Status |
-|---|---|---|
-| Web UI | Playwright | Foundation established |
-| API | Playwright API | Planned |
-| Native Android | Appium | Planned |
-| Native iOS | Appium | Planned |
+Playwright remains responsible for web UI and API automation. Appium will own native mobile execution. Do not couple Appium execution to the Playwright Test runner without an explicit architecture decision.
 
----
+## Git Workflow
 
-## CI/CD
+The project follows [Conventional Commits](https://www.conventionalcommits.org/).
 
-The project uses GitHub Actions for continuous integration.
-
-The workflow is located at:
-
-```text
-.github/workflows/playwright.yml
-```
-
-The CI pipeline is intended to execute automated tests and provide feedback on changes pushed to the repository.
-
-The pipeline will evolve as the framework grows, including additional test execution, reporting, and potentially mobile automation.
-
----
-
-## Git Workflow & Commit Conventions
-
-This project follows [Conventional Commits](https://www.conventionalcommits.org/) to maintain a clear, consistent, and meaningful commit history.
-
-### Commit message format
+Format:
 
 ```text
 <type>(<optional scope>): <description>
 ```
 
-### Commit types
-
-| Type | Purpose | Example |
-|---|---|---|
-| `feat` | Introduce new functionality | `feat: add API client` |
-| `fix` | Fix a defect | `fix: resolve login issue` |
-| `chore` | Maintenance and dependency updates | `chore: update dependencies` |
-| `test` | Add or modify tests | `test: add login scenarios` |
-| `refactor` | Improve code structure without changing behaviour | `refactor: reorganize fixtures` |
-| `docs` | Documentation updates | `docs: update README` |
-| `ci` | CI/CD pipeline changes | `ci: update GitHub Actions workflow` |
-| `style` | Formatting-only changes | `style: apply Prettier formatting` |
-
-### Examples
+Examples:
 
 ```bash
-git commit -m "feat(web): add login page object"
-
-git commit -m "feat(api): add authentication client"
-
-git commit -m "test: add login scenarios"
-
-git commit -m "refactor: improve test fixtures"
-
-git commit -m "docs: update framework architecture"
-
-git commit -m "ci: update GitHub Actions workflow"
+git commit -m "feat(api): add users client"
+git commit -m "test(web): cover checkout validation"
+git commit -m "fix(web): stabilise dialog locator"
+git commit -m "refactor(fixtures): simplify setup"
+git commit -m "docs: update quality workflow"
+git commit -m "chore: update dependencies"
 ```
 
-### Guidelines
+Use imperative descriptions, lowercase types and scopes, and concise messages. Each commit should represent a logical change.
 
-- Use the imperative mood (e.g. `add`, `update`, `fix`).
-- Keep descriptions concise and meaningful.
-- Use lowercase types and scopes.
-- Avoid vague messages such as `updates`, `changes`, or `fixes`.
-- Each commit should represent a logical change.
+## Roadmap
 
----
+1. **Representative automation coverage**
+   - Add meaningful web UI scenarios against a stable target application.
+   - Add API scenarios for successful, invalid and boundary requests.
+   - Introduce reusable page objects, API clients and fixtures where justified.
+   - Make test data and environment configuration explicit.
 
-## Future Improvements
+2. **Operational AI-assisted workflow**
+   - Implement requirement-analysis and risk-based test-design skills.
+   - Complete web and API implementation skills.
+   - Implement verification and structured review skills.
+   - Define the Test Architect and Test Reviewer specialist agents.
+   - Make Maker–Checker review evidence-based and independent.
 
-The framework is designed to evolve incrementally.
+3. **Execution and diagnostics**
+   - Improve test data setup and cleanup.
+   - Improve failure diagnostics and reporting.
+   - Strengthen CI execution and artifact handling.
+   - Review isolation and reliability as coverage grows.
 
-### 1. Web automation
-
-- Introduce the Page Object Model.
-- Implement reusable fixtures.
-- Improve browser coverage.
-- Introduce environment-specific configuration.
-- Add authentication and session management.
-
-### 2. API automation
-
-- Create reusable API clients.
-- Introduce request and response models.
-- Implement API authentication.
-- Add positive, negative, and contract-oriented test scenarios.
-- Reuse API operations for test data setup and cleanup.
-
-### 3. Mobile automation
-
-Native mobile automation will be introduced as an independent layer using Appium 3 and TypeScript.
-
-The intention is to support:
-
-- Android native applications.
-- iOS native applications.
-- Reusable screen objects.
-- Mobile-specific fixtures.
-- Device and platform configuration.
-
-Playwright will remain responsible for web and API automation. Appium will handle native mobile automation.
-
-### 4. CI/CD improvements
-
-- Separate web and API execution where appropriate.
-- Introduce configurable browser and environment matrices.
-- Improve test reporting and artifact retention.
-- Evaluate mobile execution through simulators, emulators, and device clouds.
-
-### 5. Framework maintainability
-
-- Introduce shared test data builders.
-- Improve logging and debugging.
-- Establish consistent coding conventions.
-- Evaluate automated commit message validation.
-- Keep dependencies and framework abstractions as lightweight as possible.
+4. **Native mobile**
+   - Establish the independent Appium 3 and TypeScript foundation.
+   - Add Android and iOS execution.
+   - Define device, platform and reporting strategies.
 
 ---
 
-## Project Philosophy
+## Project Principles
 
-The framework follows a few core principles:
-
-1. **Maintainability over complexity:** Avoid unnecessary abstractions and dependencies.
-2. **Reusability where it makes sense:** Share common utilities, data, and configuration without coupling unrelated automation layers.
-3. **Separation of concerns:** Keep web, API, and native mobile responsibilities independent.
-4. **Reliability:** Prioritise stable, meaningful automated tests.
-5. **Scalability:** Build a foundation that can evolve without requiring a complete redesign.
-6. **Continuous improvement:** Introduce tools and patterns when they solve an actual problem.
-
+1. Quality before automation: understand requirements and risks first.
+2. Maintainability over complexity: avoid unnecessary abstractions and dependencies.
+3. Meaningful coverage over test count: automate scenarios that provide useful feedback.
+4. Separation of concerns: keep web, API and mobile responsibilities independent.
+5. Reliability: favour deterministic tests and useful diagnostics.
+6. Evidence-based decisions: distinguish verified facts from assumptions.
+7. Human accountability: people remain responsible for decisions and risk acceptance.
+8. Continuous improvement: evolve the framework in response to real needs.

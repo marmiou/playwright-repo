@@ -58,7 +58,8 @@
           "add-api-test"
         ],
         "direct_response_allowed": false,
-        "rationale": "The requested coverage is browser UI behaviour, not service/API behaviour."
+        "rationale": "The requested coverage is browser UI behaviour, not service/API behaviour.",
+        "expected_action": "activate_skill"
       }
     },
     {
@@ -77,7 +78,8 @@
           "add-api-test"
         ],
         "direct_response_allowed": false,
-        "rationale": "The expected contract and status semantics are not defined; clarify behaviour before implementing an API test."
+        "rationale": "The expected contract and status semantics are not defined; clarify behaviour before implementing an API test.",
+        "expected_action": "activate_skill"
       }
     },
     {

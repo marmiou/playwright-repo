@@ -58,7 +58,8 @@
           "investigate-failure"
         ],
         "direct_response_allowed": false,
-        "rationale": "The task is to add a missing API test, not diagnose an observed failure."
+        "rationale": "The task is to add a missing API test, not diagnose an observed failure.",
+        "expected_action": "activate_skill"
       }
     },
     {
@@ -77,7 +78,8 @@
           "investigate-failure"
         ],
         "direct_response_allowed": true,
-        "rationale": "This is a conceptual question about flaky tests, not an observed failure investigation."
+        "rationale": "This is a conceptual question about flaky tests, not an observed failure investigation.",
+        "expected_action": "direct_response"
       }
     },
     {

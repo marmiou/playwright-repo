@@ -125,7 +125,7 @@ Do not infer that a criterion passed because a related criterion passed. Cite th
 
 For dimensions scored 0–4, calculate:
 
-`weighted score = 100 × Σ((dimension score ÷ 4) × dimension weight) ÷ Σ(applicable dimension weights)`
+`weighted score = 100 × Σ((dimension score ÷ 4) × dimension weight) ÷ Σ(scoreable dimension weights)`
 
 Exclude N/A and NE dimensions from the weighted-score numerator and denominator. Report two distinct measures: **applicable weight total** is the sum of weights for dimensions marked APPLICABLE, including applicable dimensions scored NE; **coverage percentage** is the sum of weights for APPLICABLE dimensions with numeric 0–4 scores, expressed as a percentage of the full 100-point rubric. The weighted-score denominator is the scoreable weight represented by coverage, not the applicable weight total. N/A dimensions contribute to neither measure; NE dimensions contribute to applicable weight total but not coverage. Coverage is not a pass threshold. Identify excluded dimensions and their N/A/NE reasons. Do not compare scores as if equivalent when their coverage materially differs. Round the score and coverage to one decimal place. If no dimensions are scoreable, report **NO SCORE**.
 

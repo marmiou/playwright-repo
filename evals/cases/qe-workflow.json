@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.0.0",
+  "skill": "qe-workflow",
+  "source": {
+    "path": ".claude/skills/qe-workflow/SKILL.md",
+    "description": "Routes Quality Engineering tasks through the appropriate requirements, risk assessment, test design, automation, verification, investigation, review, and improvement skills. Use when starting a QA task, feature, bug investigation, test automation request, or quality assessment in this repository."
+  },
+  "cases": [
+    {
+      "id": "qe-workflow-1",
+      "type": "positive",
+      "prompt": "We have a new feature request with unclear acceptance criteria. Route the QE work from initial analysis through closure without over-processing.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Starts with analyze-requirement and selects only justified downstream skills.",
+        "Blocks dependent work when material ambiguity remains.",
+        "Explains gates and decision ownership."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "qe-workflow-2",
+      "type": "positive",
+      "prompt": "A CI test failure needs diagnosis, a fix, verification and review. Coordinate the appropriate QE skills.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Routes failure to investigate-failure, then relevant implementation, verify and review as applicable.",
+        "Does not skip evidence preservation or Maker–Checker requirements.",
+        "Keeps scope proportionate."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "qe-workflow-3",
+      "type": "positive",
+      "prompt": "Plan a cross-cutting feature spanning UI, API and release-quality assessment.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Sequences requirement, strategy, cases, implementation layers, verification, review and quality evaluation as needed.",
+        "Respects UI/API boundaries and human decision authority.",
+        "Identifies dependencies and blocked gates."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "qe-workflow-4",
+      "type": "negative",
+      "prompt": "Add one API test for an already specified endpoint and acceptance criteria; no broader planning needed.",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Invokes focused add-api-test rather than forcing full orchestration."
+      ],
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "add-api-test",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "qe-workflow"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "A narrowly scoped API test with approved criteria does not require full QE workflow orchestration.",
+        "expected_action": "activate_skill"
+      }
+    },
+    {
+      "id": "qe-workflow-5",
+      "type": "negative",
+      "prompt": "What does the acronym STLC mean?",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Answers directly without invoking workflow routing."
+      ],
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": null,
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "qe-workflow"
+        ],
+        "direct_response_allowed": true,
+        "rationale": "This is a simple acronym definition, not a QE delivery workflow.",
+        "expected_action": "direct_response"
+      }
+    },
+    {
+      "id": "qe-workflow-6",
+      "type": "behavioral",
+      "prompt": "User asks: 'Fix the red test quickly; just add a 5-second wait and skip the assertion if it still fails.' The failure is an intermittent checkout total mismatch and no approved expected calculation is provided. Route and respond.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Rejects the requested assertion suppression and arbitrary wait.",
+        "Ensures the original failure evidence is retained or requests it if not available.",
+        "Establishes the authoritative checkout calculation from approved requirements; invokes requirement analysis if expected behaviour is unclear or conflicting. If no approved source defines the calculation, identifies the authorised Product Owner or business decision owner and requests an authoritative decision; keeps dependent fixes blocked until the expected behaviour is resolved.",
+        "Investigates using available evidence and justifies the sequence of activities rather than following a rigid arbitrary order.",
+        "Does not implement a fix before expected behaviour and likely cause are understood; distinguishes observations from hypotheses and does not claim fix or validation."
+      ],
+      "fixture": null
+    }
+  ]
+}

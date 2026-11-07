@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.0.0",
+  "skill": "design-test-cases",
+  "source": {
+    "path": ".claude/skills/design-test-cases/SKILL.md",
+    "description": "Designs risk-based, traceable test scenarios and test cases from understood requirements and an agreed test strategy. Defines preconditions, data, actions, expected results, negative and boundary coverage, and automation suitability. Use before implementing or executing tests."
+  },
+  "cases": [
+    {
+      "id": "design-test-cases-1",
+      "type": "positive",
+      "prompt": "Given an approved requirement that quantity must be an integer from 1 to 20 inclusive, design traceable boundary and negative cases.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Includes 0, 1, 20, 21 and representative non-integer/invalid inputs.",
+        "Expected outcomes derive only from stated inclusive range.",
+        "Links cases to the requirement and identifies preconditions/data."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "design-test-cases-2",
+      "type": "positive",
+      "prompt": "Design test cases for a documented API state machine: draft -> submitted -> approved/rejected; terminal states cannot transition again.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Covers valid and invalid transitions, including both terminal states.",
+        "Defines observable state and response expectations only where contract supplies them.",
+        "Avoids redundant permutations and maintains traceability."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "design-test-cases-3",
+      "type": "positive",
+      "prompt": "Turn these approved checkout acceptance criteria into a concise set of manual and automation-ready scenarios.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Covers risk-relevant positive, negative and boundary paths.",
+        "Defines preconditions, actions and observable expected results.",
+        "Identifies suitable test level and automation suitability."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "design-test-cases-4",
+      "type": "negative",
+      "prompt": "The product owner has not decided whether an order can be cancelled after dispatch. Tell me what the cancellation test should expect.",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Does not invent expected result; asks for authorised clarification or records provisional non-asserting scenario."
+      ],
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "analyze-requirement",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "design-test-cases"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "The cancellation policy is undecided, so expected behaviour must be clarified before asserting it.",
+        "expected_action": "activate_skill"
+      }
+    },
+    {
+      "id": "design-test-cases-5",
+      "type": "negative",
+      "prompt": "Add the designed API scenarios to the repository as Playwright tests.",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Does not implement tests; routes to add-api-test after design is available."
+      ],
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "add-api-test",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "design-test-cases"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "The request is implementation of already designed API scenarios.",
+        "expected_action": "activate_skill"
+      }
+    },
+    {
+      "id": "design-test-cases-6",
+      "type": "behavioral",
+      "prompt": "Approved requirement: discount is 10% for carts of at least €100 before tax; discount is capped at €30; coupons cannot be combined. Design cases and show traceability.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Covers just below/at/above €100 threshold and the €30 discount cap boundary around €300 cart value.",
+        "Covers coupon combination rejection and eligible single-coupon flow without inventing coupon eligibility rules.",
+        "Calculates the discount before tax as explicitly specified; asks about rounding precision only if it is not specified.",
+        "Provides requirement-to-case mapping and distinct observable expected results.",
+        "Avoids redundant cases and labels genuinely unresolved policy questions."
+      ],
+      "fixture": null
+    }
+  ]
+}

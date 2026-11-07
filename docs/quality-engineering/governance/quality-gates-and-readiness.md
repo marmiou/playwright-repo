@@ -88,7 +88,7 @@ Where independent review is required:
 - Known limitations and risks must be disclosed.
 - Required findings must be resolved or handled through an authorised exception.
 
-The Maker–Checker process is defined in `maker-checker-and-independent-review.md`.
+The Maker–Checker process is defined in `maker-checker.md`.
 
 ### 4.5 Release Readiness
 
@@ -204,7 +204,7 @@ Changes to gate criteria must follow the applicable governance and independent r
 
 ## 10. Related Guidance
 
-- `maker-checker-and-independent-review.md`
+- `maker-checker.md`
 - `requirements-integrity-and-product-ownership.md`
 - `../lifecycle/requirements-engineering.md`
 - `../lifecycle/test-strategy-and-design.md`

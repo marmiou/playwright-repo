@@ -47,7 +47,7 @@ This table defines the default applicable checks for the current ten behavioural
 | `investigate-failure-6` | G6, G8 |
 | `review-tests-6` | G7, G8, G9 |
 | `evaluate-quality-6` | G2, G6, G7, G8, G9 |
-| `qe-workflow-6` | G1, G6, G8 |
+| `qe-workflow-6` | G1, G2, G6, G8 |
 
 An applicability override must record the check ID, the default applicability, the revised applicable/not-applicable decision, the case-specific evidence and rationale. Do not override a check merely because evidence is missing: if the control was triggered but cannot be assessed, mark it NE. If case scope or evidence changes, revise applicability based on the actual task and explain the change. Do not mark a control applicable solely because it exists in this rubric.
 

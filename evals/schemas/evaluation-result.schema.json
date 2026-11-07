@@ -120,18 +120,6 @@
       },
       "then": {
         "properties": {
-          "governance_assessment": {
-            "properties": {
-              "verdict": {
-                "enum": [
-                  "PASS",
-                  "FAIL",
-                  "BLOCKED",
-                  "NOT RUN"
-                ]
-              }
-            }
-          },
           "case_verdict": {
             "enum": [
               "NOT RUN",
@@ -181,7 +169,10 @@
             "type": "string",
             "minLength": 1
           }
-        }
+        },
+        "required": [
+          "critical_failure_details"
+        ]
       }
     },
     {

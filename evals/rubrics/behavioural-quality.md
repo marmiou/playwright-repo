@@ -16,7 +16,7 @@ Use the same scale for every dimension, applying the dimension-specific anchors 
 - **N/A — Not applicable:** the dimension genuinely does not apply to this case. Give a short reason; exclude its weight from the denominator.
 - **NE — Not evaluable:** evidence needed to judge the dimension is unavailable or inaccessible. State exactly what is missing. Do not convert NE to zero, N/A or PASS.
 
-A score of 1 or 3 is the intermediate judgement between the adjacent anchors. Evaluators must cite evidence for every 0–4 score. N/A and NE require a reason.
+A score of 1 or 3 is the intermediate judgement between the adjacent anchors. Evaluators must cite evidence for every 0–4 score. N/A and NE require a reason. For case-verdict purposes, every dimension designated mandatory must score at least 3 to meet its required standard. A mandatory score of 0–2 is a failure of that required standard; a mandatory NE means the evaluator cannot establish whether the standard was met and therefore produces BLOCKED unless an established failure takes precedence. This threshold applies to all mandatory dimensions, not only Correctness. Correctness remains mandatory in every behavioural case.
 
 ## Dimensions and dimension-specific anchors
 
@@ -127,7 +127,7 @@ For dimensions scored 0–4, calculate:
 
 `weighted score = 100 × Σ((dimension score ÷ 4) × dimension weight) ÷ Σ(applicable dimension weights)`
 
-Exclude N/A and NE dimensions from both numerator and denominator. Report the applicable weight total (out of 100) and coverage percentage alongside the score so readers can see how much of the rubric was assessed. Coverage is the sum of weights for scoreable dimensions; it is not a pass threshold. Identify excluded dimensions and their N/A/NE reasons. Do not compare scores as if equivalent when their coverage materially differs. Round the score and coverage to one decimal place. If no dimensions are scoreable, report **NO SCORE**.
+Exclude N/A and NE dimensions from the weighted-score numerator and denominator. Report two distinct measures: **applicable weight total** is the sum of weights for dimensions marked APPLICABLE, including applicable dimensions scored NE; **coverage percentage** is the sum of weights for APPLICABLE dimensions with numeric 0–4 scores, expressed as a percentage of the full 100-point rubric. The weighted-score denominator is the scoreable weight represented by coverage, not the applicable weight total. N/A dimensions contribute to neither measure; NE dimensions contribute to applicable weight total but not coverage. Coverage is not a pass threshold. Identify excluded dimensions and their N/A/NE reasons. Do not compare scores as if equivalent when their coverage materially differs. Round the score and coverage to one decimal place. If no dimensions are scoreable, report **NO SCORE**.
 
 The weighted score is descriptive evidence, not a verdict by itself. Do not use a numerical threshold here to override failed mandatory expectations or governance checks. The overall case verdict and governance precedence are defined in the evaluation protocol, not by this rubric alone.
 

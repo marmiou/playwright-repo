@@ -173,7 +173,7 @@ jobs:
   deploy:
     name: 5 · Publish Allure report
     needs: tests
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:

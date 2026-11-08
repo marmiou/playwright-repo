@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import json
 import shutil
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from validate_cases import validate_repository
 
 
@@ -48,6 +50,7 @@ def _case(skill: str, index: int, case_type: str) -> dict:
 
 
 def _write_synthetic_repository(root: Path) -> None:
+    (root / "evals" / "schemas").mkdir(parents=True)
     shutil.copy2(
         REPO_ROOT / "evals" / "schemas" / "case.schema.json",
         root / "evals" / "schemas" / "case.schema.json",

@@ -158,6 +158,16 @@ class ValidateResultsTests(unittest.TestCase):
         self.write_record()
         self.assertEqual(self.validate(), [])
 
+    def test_valid_non_mandatory_shortfall_can_pass_with_observations(self) -> None:
+        record = copy.deepcopy(self.record)
+        dimension = record["behavioural_dimensions"][1]
+        dimension.update({"mandatory": False, "outcome": 2})
+        record["score"]["weighted_score"] = 92.5
+        record["case_verdict"] = "PASS WITH OBSERVATIONS"
+        record["case_verdict_rationale"] = "All mandatory criteria pass; one non-mandatory dimension has an observation."
+        self.write_record(record)
+        self.assertEqual(self.validate(), [])
+
     def test_empty_results_directory_validates_schema_without_claiming_ai_evaluation(self) -> None:
         errors, count = validate_results(self.root, Path("evals/results"))
         self.assertEqual(errors, [])

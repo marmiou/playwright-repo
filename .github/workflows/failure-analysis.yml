@@ -74,9 +74,11 @@ jobs:
 
           while IFS= read -r run_id; do
             [ -n "$run_id" ] || continue
-            mkdir -p "failure-analysis/artifacts/$run_id/evals" "failure-analysis/artifacts/$run_id/playwright"
+            mkdir -p "failure-analysis/artifacts/$run_id/evals" "failure-analysis/artifacts/$run_id/eval-results" "failure-analysis/artifacts/$run_id/playwright"
             gh run download "$run_id" --name eval-validation-results \
               --dir "failure-analysis/artifacts/$run_id/evals" >/dev/null 2>&1 || true
+            gh run download "$run_id" --name eval-results-validation \
+              --dir "failure-analysis/artifacts/$run_id/eval-results" >/dev/null 2>&1 || true
             gh run download "$run_id" --name playwright-json-results \
               --dir "failure-analysis/artifacts/$run_id/playwright" >/dev/null 2>&1 || true
           done < <(python -c 'import json; print("\n".join(str(x["databaseId"]) for x in json.load(open("failure-analysis/runs/all.json"))))')

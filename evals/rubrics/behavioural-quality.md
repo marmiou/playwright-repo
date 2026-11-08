@@ -105,9 +105,9 @@ Assess whether the output makes its findings, limitations and next steps underst
 Assess every `expectations[]` item separately:
 
 - **PASS:** directly supported by the supplied output or artifact and, where relevant, execution evidence.
-- **PARTIAL:** addressed but incomplete, weakly evidenced or only partly correct.
-- **FAIL:** omitted, contradicted or materially incorrect.
-- **NOT ASSESSABLE:** the required source or evidence is unavailable.
+- **PARTIAL:** addressed but incomplete, weakly evidenced or only partly correct. All expectations in the current seed cases are mandatory, so PARTIAL is a mandatory shortfall and produces an overall case verdict of FAIL; it cannot be treated as a non-blocking observation.
+- **FAIL:** omitted, contradicted or materially incorrect; a mandatory expectation FAIL produces an overall case verdict of FAIL.
+- **NOT ASSESSABLE:** the required source or evidence is unavailable; a mandatory expectation that is NOT ASSESSABLE produces BLOCKED unless an established failure takes precedence.
 
 Do not infer that a criterion passed because a related criterion passed. Cite the smallest useful evidence location (file and line, diff hunk, trace/event, command output or quoted response). A response's claim that it performed an action is not proof that it did so.
 

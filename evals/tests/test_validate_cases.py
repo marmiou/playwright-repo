@@ -10,7 +10,12 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from validate_cases import validate_repository
+from validate_cases import (
+    _failure_details,
+    _github_error_annotation,
+    _write_results,
+    validate_repository,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -215,6 +220,63 @@ class ValidateSyntheticDatasetTests(unittest.TestCase):
         errors = validate_repository(self.root)
         self.assertTrue(any("expected exactly 10 skill files" in error for error in errors), errors)
         self.assertTrue(any("missing case files" in error for error in errors), errors)
+
+
+class ValidatorReportingTests(unittest.TestCase):
+    def test_failure_details_include_case_file_and_rule(self) -> None:
+        failures = _failure_details([
+            "evals/cases/add-api-test.json: case 'add-api-test-4' must forbid its target skill"
+        ])
+
+        self.assertEqual(len(failures), 1)
+        self.assertEqual(failures[0]["case_id"], "add-api-test-4")
+        self.assertEqual(failures[0]["file"], "evals/cases/add-api-test.json")
+        self.assertEqual(failures[0]["rule"], "skill_or_routing_invariant")
+        self.assertIn("must forbid", failures[0]["message"])
+
+    def test_error_annotation_contains_file_title_and_message(self) -> None:
+        annotation = _github_error_annotation({
+            "file": "evals/cases/example.json",
+            "line": 12,
+            "rule": "schema_validation",
+            "message": "invalid property",
+        })
+
+        self.assertEqual(
+            annotation,
+            "::error file=evals/cases/example.json,line=12,title=schema_validation::invalid property",
+        )
+
+    def test_results_file_is_machine_readable(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "results.json"
+            failures = [{
+                "case_id": "example-1",
+                "file": "evals/cases/example.json",
+                "line": None,
+                "rule": "schema_validation",
+                "message": "invalid property",
+            }]
+
+            _write_results(output, failures)
+            payload = json.loads(output.read_text(encoding="utf-8"))
+
+        self.assertEqual(payload["status"], "failed")
+        self.assertEqual(payload["failure_count"], 1)
+        self.assertEqual(payload["failures"], failures)
+
+    def test_empty_results_file_records_pass(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "results.json"
+            _write_results(output, [])
+            payload = json.loads(output.read_text(encoding="utf-8"))
+
+        self.assertEqual(payload, {
+            "status": "passed",
+            "failure_count": 0,
+            "failures": [],
+        })
+
 
 
 if __name__ == "__main__":

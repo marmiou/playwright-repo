@@ -196,6 +196,11 @@ An independent evaluator should receive only the evidence needed for the case, b
 
 ## Results and provenance
 
+The result-integrity validator requires `evals/results/` to exist. An existing directory with no JSON records is valid and explicitly means that no behavioural evaluation records have been captured yet. A missing directory, a non-directory path, or a JSON result file resolving outside the repository is an error. See [the results directory guide](results/README.md).
+
+Every affirmative expectation assessment (`PASS`, `PARTIAL` or `FAIL`), every numeric behavioural-dimension score, every applicable governance `PASS`/`FAIL`, and every completed human adjudication must carry at least one evidence reference. Empty evidence is reserved for genuinely unavailable/non-assessable evidence and must be explained in provenance notes; missing evidence must not be converted into a positive assessment. Accepted reference forms are repository files (`repo:`/`file:`), HTTP(S) URLs, and identified `trace:`, `artifact:`, `run:` or `response:` references. Unknown schemes are rejected. These checks establish reference presence and resolvability where possible, not substantive relevance or truth.
+
+
 `results/` is reserved for actual evaluation runs. No illustrative scores or fabricated run outputs belong here. Store each run in a timestamped directory or file and include:
 - case ID and dataset revision/commit;
 - executor and evaluator model/provider, exact model version and host/runtime version;

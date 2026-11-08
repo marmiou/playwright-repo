@@ -1,6 +1,6 @@
 # QE Agent Skill Evaluations
 
-This directory contains the test design, case dataset, deterministic Tier 1 case validator and Tier 3 evaluation-result integrity validator for the repository's ten Claude Code QE skills. It is **not a model/skill execution runner**: these validators make no model calls and do not execute skills. They use a pinned Python `jsonschema` dependency and run as separate jobs in the unified `CI` workflow when evaluation cases, skill instructions or the CI workflow definition change. Each validator emits GitHub error annotations and a machine-readable JSON result artifact. The scheduled `Daily Failure Analysis` workflow aggregates case-validation, result-validation and Playwright artifacts, reports recurring failures and opens or comments on one tracking issue; it is read-only with respect to skills and evaluation cases. No MCP servers or provider integrations are configured.
+This directory contains the test design, case dataset, deterministic Tier 1 case validator and Tier 3 evaluation-result integrity validator for the repository's ten Claude Code QE skills. It is **not a model/skill execution runner**: these validators make no model calls and do not execute skills. They use a pinned Python `jsonschema` dependency and run as separate jobs in the unified `Application & AI QE Framework CI` workflow when evaluation cases, skill instructions or the CI workflow definition change. Each validator emits GitHub error annotations and a machine-readable JSON result artifact. The scheduled `Daily Failure Analysis` workflow aggregates case-validation, result-validation and Playwright artifacts, reports recurring failures and opens or comments on one tracking issue; it is read-only with respect to skills and evaluation cases. No MCP servers or provider integrations are configured.
 
 ## Scope and inventory
 
@@ -50,7 +50,7 @@ python3 -m unittest discover -s evals/tests -v
 python3 evals/validate_cases.py
 ```
 
-The unified `CI` workflow runs the case unit tests, dataset validation and evaluation-result validation as separate AI QE Framework jobs when evaluation cases, skill instructions or its own workflow definition change. Tier 1 checks:
+The unified `Application & AI QE Framework CI` workflow runs the case unit tests, dataset validation and evaluation-result validation as separate AI QE Framework jobs when evaluation cases, skill instructions or its own workflow definition change. Tier 1 checks:
 - Validate every case file against `schemas/case.schema.json` using JSON Schema Draft 2020-12 and format checking.
 - Check exactly ten skill files and matching case files, with three positive, two negative and one behavioural case per skill.
 - Reject duplicate JSON object keys and globally duplicate case IDs.
@@ -68,7 +68,7 @@ Run the result-record validator from the repository root:
 python3 evals/validate_results.py
 ```
 
-The unified `CI` workflow runs this as a separate AI QE Framework job. It validates the result schema and, for every JSON record under `evals/results/`:
+The unified `Application & AI QE Framework CI` workflow runs this as a separate AI QE Framework job. It validates the result schema and, for every JSON record under `evals/results/`:
 
 - Resolves the case ID to a behavioural case and checks that expectation indices 1–5 and their exact text match the source case; requires all eight dimension IDs exactly once.
 - Reconciles governance checks with the case-specific default matrix, checks unique IDs, validates applicability overrides and requires explicit evidence references. Repository references must resolve; semantic relevance remains a human-review responsibility.

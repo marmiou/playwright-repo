@@ -345,6 +345,8 @@ jobs:
               lines.append("No detailed failure records were available.")
 
           summary = "\n".join(lines) + "\n"
+          if len(summary) > 20000:
+              summary = summary[:19500] + "\n\n_Summary truncated to 20,000 characters._\n"
           Path(os.environ["GITHUB_STEP_SUMMARY"]).write_text(summary, encoding="utf-8")
           print(summary)
 

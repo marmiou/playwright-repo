@@ -277,6 +277,10 @@ def check_reference_notes(record: dict[str, Any], file: str, errors: list[str]) 
         for item in check_items if isinstance(check_items, list) else []:
             if isinstance(item, dict) and item.get("evidence") == []:
                 missing.append(f"governance {item.get('check_id')}")
+        override_items = governance.get("applicability_overrides", [])
+        for item in override_items if isinstance(override_items, list) else []:
+            if isinstance(item, dict) and item.get("evidence") == []:
+                missing.append(f"governance override {item.get('check_id')}")
     adjudication = record.get("human_adjudication")
     if isinstance(adjudication, dict) and adjudication.get("evidence") == []:
         missing.append("adjudication")
@@ -301,6 +305,8 @@ def check_provenance(record: dict[str, Any], case: dict[str, Any], root: Path, f
         config = None
     if not isinstance(config, dict):
         add(errors, file, "provenance.configuration must be a JSON-encoded object")
+    elif provenance.get("configuration") != json.dumps(config, sort_keys=True, separators=(",", ":")):
+        add(errors, file, "provenance.configuration must use canonical JSON serialization")
 
     tools = provenance.get("available_tools")
     manifest = provenance.get("tooling_manifest")

@@ -272,7 +272,10 @@ def analyze(runs: list[dict[str, Any]], artifacts_dir: Path) -> list[dict[str, A
         if not run_id:
             continue
         root = artifacts_dir / run_id
-        validator = root / "evals" / "results.json"
+        validators = [
+            root / "evals" / "results.json",
+            root / "eval-results" / "results.json",
+        ]
         playwright = root / "playwright" / "results.json"
         behavioural_files = list(root.glob("behavioural/**/*.json"))
 
@@ -281,11 +284,12 @@ def analyze(runs: list[dict[str, Any]], artifacts_dir: Path) -> list[dict[str, A
             for group in groups.values()
             for observation in group["observations"]
         )
-        if validator.is_file():
-            payload = _read_json(validator)
-            if isinstance(payload, dict) and payload.get("status") == "passed":
-                successful_validator_runs.append(run)
-            _parse_validator(validator, run, groups)
+        for validator in validators:
+            if validator.is_file():
+                payload = _read_json(validator)
+                if isinstance(payload, dict) and payload.get("status") == "passed":
+                    successful_validator_runs.append(run)
+                _parse_validator(validator, run, groups)
         if playwright.is_file():
             _parse_playwright(playwright, run, groups)
         for file in behavioural_files:

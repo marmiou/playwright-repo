@@ -115,7 +115,7 @@ def _record(
     })
     sha = str(run.get("headSha") or run.get("head_sha") or "unknown-sha")
     group["observations"].append({"sha": sha, "outcome": outcome})
-    group["runs"][sha] = outcome
+    group["runs"].setdefault(sha, []).append(outcome)
     url = _run_url(run)
     if url and url not in group["evidence"]:
         group["evidence"].append(url)
@@ -177,7 +177,7 @@ def _playwright_tests(payload: Any) -> list[dict[str, Any]]:
                     )
                     retry_flake = "failed" in states[:-1] and final == "passed"
                     name = " › ".join(part for part in next_parents + [spec_title] if part)
-                    test_key = f"{path or suite.get('file', '')}::{name or spec_title}"
+                    test_key = f"{spec.get('file') or path}::{name or spec_title}"
                     error_messages = []
                     for result in results:
                         if isinstance(result, dict) and result.get("error"):
@@ -255,6 +255,7 @@ def _parse_future_behavioural(
 
 def analyze(runs: list[dict[str, Any]], artifacts_dir: Path) -> list[dict[str, Any]]:
     groups: dict[str, dict[str, Any]] = {}
+    successful_validator_runs: list[dict[str, Any]] = []
     for run in runs:
         run_id = str(run.get("databaseId") or run.get("id") or "")
         if not run_id:
@@ -265,17 +266,28 @@ def analyze(runs: list[dict[str, Any]], artifacts_dir: Path) -> list[dict[str, A
         behavioural_files = list(root.glob("behavioural/**/*.json"))
 
         if validator.is_file():
+            payload = _read_json(validator)
+            if isinstance(payload, dict) and payload.get("status") == "passed":
+                successful_validator_runs.append(run)
             _parse_validator(validator, run, groups)
         if playwright.is_file():
             _parse_playwright(playwright, run, groups)
         for file in behavioural_files:
             _parse_future_behavioural(file, run, groups)
 
+    for group in groups.values():
+        if group["kind"] == "validator":
+            for successful_run in successful_validator_runs:
+                sha = str(successful_run.get("headSha") or successful_run.get("head_sha") or "unknown-sha")
+                if sha in group["runs"]:
+                    group["runs"][sha].append("passed")
+
     results = []
     for group in groups.values():
-        failed_runs = sum(outcome == "failed" for outcome in group["runs"].values())
-        passed_runs = sum(outcome == "passed" for outcome in group["runs"].values())
-        mixed = failed_runs > 0 and passed_runs > 0
+        outcomes = [outcome for run_outcomes in group["runs"].values() for outcome in run_outcomes]
+        failed_runs = sum(outcome == "failed" for outcome in outcomes)
+        passed_runs = sum(outcome == "passed" for outcome in outcomes)
+        mixed = any("failed" in values and "passed" in values for values in group["runs"].values())
         text_for_classification = " ".join(
             [group["key"], group["message"], str(group["skill"] or "")]
         )

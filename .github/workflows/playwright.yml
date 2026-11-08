@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   changes:
-    name: 0 · Check if eval files changed
+    name: 0 · Detect QE Framework Changes
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -34,28 +34,8 @@ jobs:
               - '.claude/skills/**'
               - '.github/workflows/playwright.yml'
 
-  lint:
-    name: 1 · Lint and type check
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Setup Node.js and Yarn
-        uses: ./.github/actions/setup
-
-      - name: Install dependencies
-        run: yarn install --immutable
-
-      - name: Run ESLint
-        run: yarn lint
-
-      - name: Run TypeScript checks
-        run: yarn typecheck
-
   evals-unit:
-    name: 2 · Test the eval validator
+    name: 1 · QE Framework — Validator Unit Tests
     needs: changes
     if: needs.changes.outputs.evals == 'true'
     runs-on: ubuntu-latest
@@ -78,7 +58,7 @@ jobs:
         run: python -m unittest discover -s evals/tests -v
 
   evals-dataset:
-    name: 3 · Validate eval cases
+    name: 2 · QE Framework — Validate Evaluation Dataset
     needs: changes
     if: needs.changes.outputs.evals == 'true'
     runs-on: ubuntu-latest
@@ -109,8 +89,28 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
 
+  lint:
+    name: 3 · Application — Lint & Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js and Yarn
+        uses: ./.github/actions/setup
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run ESLint
+        run: yarn lint
+
+      - name: Run TypeScript checks
+        run: yarn typecheck
+
   tests:
-    name: 4 · Run Playwright tests
+    name: 4 · Application — Playwright Tests
     needs: [lint, evals-unit, evals-dataset]
     if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
     runs-on: ubuntu-latest
@@ -171,7 +171,7 @@ jobs:
           if-no-files-found: ignore
 
   deploy:
-    name: 5 · Publish Allure report
+    name: 5 · Application — Publish Allure Report
     needs: tests
     if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -197,7 +197,7 @@ jobs:
           publish_dir: allure-report
 
   summary:
-    name: 6 · Pipeline summary
+    name: 6 · Pipeline Summary
     needs: [changes, lint, evals-unit, evals-dataset, tests, deploy]
     if: always()
     runs-on: ubuntu-latest
@@ -235,12 +235,12 @@ jobs:
           from pathlib import Path
 
           statuses = [
-              ("0", "Check if eval files changed", os.environ["CHANGES_RESULT"], ""),
-              ("1", "Lint and type check", os.environ["LINT_RESULT"], ""),
-              ("2", "Test the eval validator", os.environ["UNIT_RESULT"], ""),
-              ("3", "Validate eval cases", os.environ["DATASET_RESULT"], ""),
-              ("4", "Run Playwright tests", os.environ["TESTS_RESULT"], ""),
-              ("5", "Publish Allure report", os.environ["DEPLOY_RESULT"], ""),
+              ("0", "Detect QE Framework Changes", os.environ["CHANGES_RESULT"], ""),
+              ("1", "QE Framework — Validator Unit Tests", os.environ["UNIT_RESULT"], ""),
+              ("2", "QE Framework — Validate Evaluation Dataset", os.environ["DATASET_RESULT"], ""),
+              ("3", "Application — Lint & Typecheck", os.environ["LINT_RESULT"], ""),
+              ("4", "Application — Playwright Tests", os.environ["TESTS_RESULT"], ""),
+              ("5", "Application — Publish Allure Report", os.environ["DEPLOY_RESULT"], ""),
           ]
 
           def safe_text(value, limit=500):

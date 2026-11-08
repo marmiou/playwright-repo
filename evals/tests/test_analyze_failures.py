@@ -86,6 +86,20 @@ class AnalyzeFailuresTests(unittest.TestCase):
 
         self.assertEqual(groups, [])
 
+
+    def test_failed_pipeline_without_artifacts_is_reported_as_unknown(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            groups = analyze([{
+                "databaseId": 401,
+                "headSha": "infra-sha",
+                "url": "https://example.test/runs/401",
+                "conclusion": "failure",
+            }], Path(directory))
+
+        self.assertEqual(len(groups), 1)
+        self.assertEqual(groups[0]["bucket"], "unknown")
+        self.assertIn("no failing validator or Playwright", groups[0]["message"])
+
     def test_empty_report_states_no_failures(self) -> None:
         report = render_report([], 1)
         self.assertIn("No CI failure artifacts", report)

@@ -135,7 +135,7 @@ def check_score(record: dict[str, Any], file: str, errors: list[str]) -> None:
         elif item.get("applicability") == "NOT_APPLICABLE" and outcome == "N/A":
             excluded[key] = ("N/A", str(item.get("rationale", "")))
 
-    expected_score = round_one(weighted / scoreable) if scoreable else None
+    expected_score = round_one(Decimal(100) * weighted / (scoreable * Decimal(4))) if scoreable else None
     expected_coverage = round_one(scoreable)
     expected_applicable = round_one(applicable)
 
@@ -481,7 +481,7 @@ def validate_results(root: Path, results_dir: Path) -> tuple[list[str], int]:
         assessments = record.get("expectation_assessments")
         if isinstance(assessments, list):
             indices = [item.get("index") for item in assessments if isinstance(item, dict)]
-            if sorted(indices) != [1, 2, 3, 4, 5] or len(indices) != len(set(indices)):
+            if len(indices) != 5 or any(not isinstance(value, int) or isinstance(value, bool) for value in indices) or sorted(indices) != [1, 2, 3, 4, 5] or len(indices) != len(set(indices)):
                 add(errors, relative, "expectation assessments must contain indices 1–5 exactly once")
             for item in assessments:
                 if isinstance(item, dict) and isinstance(item.get("index"), int) and 1 <= item["index"] <= 5:

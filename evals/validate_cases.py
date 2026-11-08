@@ -279,6 +279,69 @@ def validate_repository(repo_root: Path) -> list[str]:
     return errors
 
 
+def _failure_details(errors: list[str]) -> list[dict[str, Any]]:
+    """Convert validator messages into stable, machine-readable failure records."""
+    import re
+
+    records: list[dict[str, Any]] = []
+    for error in errors:
+        file_match = re.match(r"^((?:evals|\.claude)/[^:]+):\s*(.*)$", error)
+        file_name = file_match.group(1) if file_match else None
+        message = file_match.group(2) if file_match else error
+        case_match = re.search(r"case ['\"]([^'\"]+)['\"]", message)
+        if not case_match:
+            case_match = re.search(r"duplicate case id ['\"]([^'\"]+)['\"]", message)
+        if "schema validation" in message:
+            rule = "schema_validation"
+        elif "duplicate" in message:
+            rule = "duplicate_identifier"
+        elif "fixture" in message:
+            rule = "fixture_reference"
+        elif "routing" in message or "skill" in message or "frontmatter" in message:
+            rule = "skill_or_routing_invariant"
+        elif "source." in message:
+            rule = "source_metadata"
+        elif "composition" in message:
+            rule = "case_composition"
+        elif "JSON" in message or "json" in message:
+            rule = "json_syntax"
+        else:
+            rule = "dataset_invariant"
+
+        line_match = re.search(r"\bline\s+(\d+)\b", message, re.IGNORECASE)
+        records.append({
+            "case_id": case_match.group(1) if case_match else None,
+            "file": file_name,
+            "line": int(line_match.group(1)) if line_match else None,
+            "rule": rule,
+            "message": message,
+        })
+    return records
+
+
+def _escape_workflow_command(value: str) -> str:
+    return value.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+
+def _github_error_annotation(failure: dict[str, Any]) -> str:
+    file_name = failure.get("file") or "evals"
+    line = failure.get("line")
+    location = f"file={file_name}" + (f",line={line}" if line else "")
+    title = _escape_workflow_command(str(failure["rule"]))
+    message = _escape_workflow_command(str(failure["message"]))
+    return f"::error {location},title={title}::{message}"
+
+
+def _write_results(path: Path, failures: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "status": "failed" if failures else "passed",
+        "failure_count": len(failures),
+        "failures": failures,
+    }
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Validate QE skill evaluation case schemas and repository-level dataset invariants."
@@ -289,13 +352,23 @@ def main() -> int:
         default=Path(__file__).resolve().parents[1],
         help="Repository root (defaults to the parent of evals/).",
     )
+    parser.add_argument(
+        "--results-file",
+        type=Path,
+        default=Path("eval-validation-results.json"),
+        help="Path for machine-readable validation results.",
+    )
     args = parser.parse_args()
 
     errors = validate_repository(args.repo_root)
+    failures = _failure_details(errors)
+    _write_results(args.results_file, failures)
+
     if errors:
         print(f"Tier 1 case validation FAILED ({len(errors)} issue(s)):")
-        for error in errors:
-            print(f"- {error}")
+        for failure in failures:
+            print(f"- {failure['message']}")
+            print(_github_error_annotation(failure))
         return 1
 
     print(

@@ -113,7 +113,7 @@ def _record(
         "runs": {},
         "evidence": [],
     })
-    sha = str(run.get("headSha") or run.get("head_sha") or "unknown-sha")
+    sha = str(run.get("headSha") or run.get("head_sha") or f"run:{run.get('databaseId') or run.get('id') or 'unknown'}")
     group["observations"].append({"sha": sha, "outcome": outcome})
     outcomes = ["failed", "passed"] if outcome == "flaky" else [outcome]
     group["runs"].setdefault(sha, []).extend(outcomes)
@@ -266,6 +266,7 @@ def analyze(runs: list[dict[str, Any]], artifacts_dir: Path) -> list[dict[str, A
         playwright = root / "playwright" / "results.json"
         behavioural_files = list(root.glob("behavioural/**/*.json"))
 
+        groups_before_run = len(groups)
         if validator.is_file():
             payload = _read_json(validator)
             if isinstance(payload, dict) and payload.get("status") == "passed":
@@ -276,10 +277,24 @@ def analyze(runs: list[dict[str, Any]], artifacts_dir: Path) -> list[dict[str, A
         for file in behavioural_files:
             _parse_future_behavioural(file, run, groups)
 
+        if str(run.get("conclusion") or "").lower() == "failure" and len(groups) == groups_before_run:
+            failure = {
+                "test_key": "pipeline:failure-without-diagnostic-artifacts",
+                "message": "The CI run failed but no failing validator or Playwright result artifact was available. Inspect the job logs to identify the failing stage.",
+            }
+            _record(
+                groups,
+                "pipeline:failure-without-diagnostic-artifacts",
+                kind="pipeline",
+                run=run,
+                failure=failure,
+                outcome="failed",
+            )
+
     for group in groups.values():
         if group["kind"] == "validator":
             for successful_run in successful_validator_runs:
-                sha = str(successful_run.get("headSha") or successful_run.get("head_sha") or "unknown-sha")
+                sha = str(successful_run.get("headSha") or successful_run.get("head_sha") or f"run:{successful_run.get('databaseId') or successful_run.get('id') or 'unknown'}")
                 if sha in group["runs"]:
                     group["runs"][sha].append("passed")
 

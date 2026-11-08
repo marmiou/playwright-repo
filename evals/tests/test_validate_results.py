@@ -95,7 +95,7 @@ def make_repository(root: Path) -> dict:
             "evidence": ["trace:adjudication-not-required"],
         },
         "score": {
-            "weighted_score": 4.0,
+            "weighted_score": 100.0,
             "applicable_weight_total": 100.0,
             "coverage_percentage": 100.0,
             "excluded_dimensions": [],
@@ -196,7 +196,7 @@ class ValidateResultsTests(unittest.TestCase):
     def test_mandatory_dimension_below_three_requires_fail(self) -> None:
         record = copy.deepcopy(self.record)
         record["behavioural_dimensions"][0]["outcome"] = 2
-        record["score"]["weighted_score"] = 3.5
+        record["score"]["weighted_score"] = 87.5
         record["case_verdict"] = "PASS"
         self.write_record(record)
         errors = self.validate()
@@ -261,7 +261,7 @@ class ValidateResultsTests(unittest.TestCase):
         item = record["behavioural_dimensions"][1]
         item.update({"applicability": "NOT_APPLICABLE", "mandatory": False, "outcome": "N/A"})
         record["score"].update({
-            "weighted_score": 4.0,
+            "weighted_score": 100.0,
             "applicable_weight_total": 85.0,
             "coverage_percentage": 85.0,
             "excluded_dimensions": [],

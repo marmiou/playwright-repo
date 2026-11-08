@@ -46,7 +46,7 @@ jobs:
           since="$(date -u -d "$DAYS days ago" +%Y-%m-%d)"
           mkdir -p failure-analysis/runs failure-analysis/artifacts
 
-          gh run list --workflow CI --status failure --created ">=$since" --limit 100 \
+          gh run list --workflow 'Application & AI QE Framework CI' --status failure --created ">=$since" --limit 100 \
             --json databaseId,url,createdAt,headSha,conclusion > failure-analysis/runs/failed.json
           gh run list --workflow CI --status success --created ">=$since" --limit 100 \
             --json databaseId,url,createdAt,headSha,conclusion > failure-analysis/runs/successful.json

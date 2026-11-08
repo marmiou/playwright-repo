@@ -51,19 +51,23 @@ jobs:
 
           python - <<'PY'
           import json
+          from datetime import datetime, timedelta, timezone
           from pathlib import Path
 
+          cutoff = datetime.now(timezone.utc) - timedelta(days=int(__import__("os").environ["DAYS"]))
           runs = []
           seen = set()
           for name in ("failed.json", "successful.json"):
               items = json.loads((Path("failure-analysis/runs") / name).read_text())
               for item in items:
-                  if item["databaseId"] not in seen:
-                      seen.add(item["databaseId"])
-                      runs.append(item)
+                  created = datetime.fromisoformat(item["createdAt"].replace("Z", "+00:00"))
+                  if created < cutoff or item["databaseId"] in seen:
+                      continue
+                  seen.add(item["databaseId"])
+                  runs.append(item)
           runs.sort(key=lambda item: item.get("createdAt", ""))
           Path("failure-analysis/runs/all.json").write_text(json.dumps(runs, indent=2))
-          print(f"Found {len(runs)} completed CI run(s) in the requested window.")
+          print(f"Found {len(runs)} completed CI run(s) in the last {int(__import__('os').environ['DAYS'])} day(s).")
           PY
 
           while IFS= read -r run_id; do

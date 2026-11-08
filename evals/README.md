@@ -48,7 +48,6 @@ Run the validator and its unit tests from the repository root:
 python3 -m pip install -r evals/requirements.txt
 python3 -m unittest discover -s evals/tests -v
 python3 evals/validate_cases.py
-python3 evals/validate_results.py
 ```
 
 The unified `CI` workflow runs the case unit tests, dataset validation and evaluation-result validation as separate AI QE Framework jobs when evaluation cases, skill instructions or its own workflow definition change. Tier 1 checks:
@@ -61,7 +60,26 @@ The unified `CI` workflow runs the case unit tests, dataset validation and evalu
 
 The validator does not judge whether expectations are well-written or whether fixture contents contain secrets or personal data; those remain human-review responsibilities. Structural validity says nothing about model behaviour. A structurally valid test can still be a poor test.
 
-Structural validity says nothing about model behaviour. A structurally valid test can still be a poor test.
+### Evaluation-result integrity validation (deterministic, no model)
+
+Run the result-record validator from the repository root:
+
+```bash
+python3 evals/validate_results.py
+```
+
+The unified `CI` workflow runs this as a separate AI QE Framework job. It validates the result schema and, for every JSON record under `evals/results/`:
+
+- Resolves the case ID to a behavioural case and checks that expectation indices 1–5 and their exact text match the source case; requires all eight dimension IDs exactly once.
+- Reconciles governance checks with the case-specific default matrix, checks unique IDs, validates applicability overrides and requires explicit evidence references. Repository references must resolve; semantic relevance remains a human-review responsibility.
+- Enforces governance verdict consistency and FAIL-first case-verdict/evaluation-status precedence. In particular, a PARTIAL mandatory expectation cannot be reported as PASS WITH OBSERVATIONS.
+- Recalculates the weighted score on the rubric's 0–100 scale, applicable weight total and coverage; reconciles excluded N/A/NE dimensions.
+- Checks provenance structure, canonical JSON configuration, tool-manifest name consistency, rubric/skill paths and SHA-256 values. When the recorded Git revision is available, it compares skill and rubric hashes with the file contents at that revision.
+- Requires reference-availability notes to identify null prompt/trace/artifact references and empty evidence arrays; resolves explicit repository references where possible.
+
+The validator does not execute an AI agent, generate an assessment, decide whether a skill actually met an expectation, or determine whether evidence substantively supports an evaluator's judgement. It cannot infer whether an additional governance control was triggered or whether an override's evidence is persuasive. Those remain evaluator and human-review responsibilities.
+
+If `evals/results/` contains no records, the validator still checks the schema and validator setup, reports zero records inspected, and does not claim that any AI behaviour was evaluated. Evidence references may use `repo:<path>#Lx-Ly`, `file:<path>`, `trace:<id>`, `artifact:<id>`, `response:<id>`, `run:<id>` or an HTTPS URL. Repository/file references are resolved inside the repository; external and opaque references are retained but not fetched. Hashes support traceability and do not prove authenticity or evidence integrity.
 
 ### Tier 2 — Skill selection and routing
 
@@ -200,7 +218,7 @@ The case schema can later add tool expectations without binding to a provider: `
 - LLM-as-judge scoring is itself fallible. Use criterion-level evidence, independent review and human adjudication for consequential findings.
 - One behavioural case per skill is a minimum smoke evaluation, not sufficient statistical confidence.
 - The current set does not establish whether a skill improves output compared with the same task without that skill. A controlled skill-disabled baseline (ablation) is required before making incremental-contribution claims.
-- The Tier 1 structural validator, its unit tests, the Tier 3 evaluation-result integrity validator, adversarial tests and CI jobs are implemented. The result validator checks recorded results against deterministic schema and policy rules; it does not generate assessments, execute AI skills or decide whether an evaluator's substantive interpretation is correct. There is still no model/skill execution runner, provider adapter or automated Tier 2/Tier 3 benchmark. Those remain separate future steps and must not be implied by passing structural or result-integrity validation.
+- The Tier 1 structural validator, its unit tests, the deterministic evaluation-result integrity validator, adversarial tests and CI jobs are implemented. The result validator checks recorded results against deterministic schema and policy rules; it does not generate assessments, execute AI skills or decide whether an evaluator's substantive interpretation is correct. There is still no model/skill execution runner, provider adapter or automated Tier 2/Tier 3 benchmark. Those remain separate future steps and must not be implied by passing structural or result-integrity validation.
 
 ## References
 

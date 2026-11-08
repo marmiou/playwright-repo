@@ -177,7 +177,7 @@ class ValidateResultsTests(unittest.TestCase):
         self.assertTrue(any("results path is not a directory" in error for error in errors))
 
     def test_result_file_symlink_cannot_escape_repository(self) -> None:
-        outside = Path(self.temp.name).parent / "outside-result.json"
+        outside = self.root.parent / f"{self.root.name}-outside-result.json"
         outside.write_text("{}", encoding="utf-8")
         link = self.results / "escape.json"
         try:

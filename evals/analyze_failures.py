@@ -57,10 +57,10 @@ def _skill_from_failure(failure: dict[str, Any]) -> str | None:
     return None
 
 
-def _group_key(kind: str, failure: dict[str, Any]) -> str:
+def _group_key(kind: str, failure: dict[str, Any], source: str | None = None) -> str:
     if kind == "validator":
         identity = failure.get("case_id") or failure.get("file") or "dataset"
-        return f"validator:{failure.get('rule', 'unknown')}:{identity}"
+        return f"validator:{source or 'unknown'}:{failure.get('rule', 'unknown')}:{identity}"
     return f"playwright:{failure.get('test_key', 'unknown-test')}"
 
 
@@ -112,10 +112,12 @@ def _record(
     run: dict[str, Any],
     failure: dict[str, Any],
     outcome: str,
+    source: str | None = None,
 ) -> None:
     group = groups.setdefault(key, {
         "key": key,
         "kind": kind,
+        "source": source,
         "rule_or_test": failure.get("rule") or failure.get("test_key") or key,
         "skill": _skill_from_failure(failure),
         "message": str(failure.get("message") or failure.get("error") or "")[:MAX_MESSAGE_LENGTH],
@@ -133,28 +135,30 @@ def _record(
 
 
 def _parse_validator(
-    path: Path, run: dict[str, Any], groups: dict[str, dict[str, Any]]
-) -> None:
+    path: Path, run: dict[str, Any], groups: dict[str, dict[str, Any]], source: str
+) -> bool:
     payload = _read_json(path)
     if not isinstance(payload, dict):
-        return
+        return False
     failures = payload.get("failures", [])
     if not isinstance(failures, list):
-        return
+        return False
     if not failures and payload.get("status") == "passed":
-        # A successful validator run is retained as evidence for same-commit comparisons.
-        return
+        # A successful result is compared only with failures from this validator.
+        return True
     for item in failures:
         if not isinstance(item, dict):
             continue
         _record(
             groups,
-            _group_key("validator", item),
+            _group_key("validator", item, source),
             kind="validator",
             run=run,
             failure=item,
             outcome="failed",
+            source=source,
         )
+    return False
 
 
 def _playwright_tests(payload: Any) -> list[dict[str, Any]]:
@@ -256,25 +260,26 @@ def _parse_future_behavioural(
         }
         _record(
             groups,
-            _group_key("validator", failure),
+            _group_key("validator", failure, "behavioural"),
             kind="behavioural",
             run=run,
             failure=failure,
             outcome="failed",
+            source="behavioural",
         )
 
 
 def analyze(runs: list[dict[str, Any]], artifacts_dir: Path) -> list[dict[str, Any]]:
     groups: dict[str, dict[str, Any]] = {}
-    successful_validator_runs: list[dict[str, Any]] = []
+    successful_validator_runs: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for run in runs:
         run_id = str(run.get("databaseId") or run.get("id") or "")
         if not run_id:
             continue
         root = artifacts_dir / run_id
         validators = [
-            root / "evals" / "results.json",
-            root / "eval-results" / "results.json",
+            ("case-dataset", root / "evals" / "results.json"),
+            ("evaluation-results", root / "eval-results" / "results.json"),
         ]
         playwright = root / "playwright" / "results.json"
         behavioural_files = list(root.glob("behavioural/**/*.json"))
@@ -284,12 +289,9 @@ def analyze(runs: list[dict[str, Any]], artifacts_dir: Path) -> list[dict[str, A
             for group in groups.values()
             for observation in group["observations"]
         )
-        for validator in validators:
-            if validator.is_file():
-                payload = _read_json(validator)
-                if isinstance(payload, dict) and payload.get("status") == "passed":
-                    successful_validator_runs.append(run)
-                _parse_validator(validator, run, groups)
+        for source, validator in validators:
+            if validator.is_file() and _parse_validator(validator, run, groups, source):
+                successful_validator_runs[source].append(run)
         if playwright.is_file():
             _parse_playwright(playwright, run, groups)
         for file in behavioural_files:
@@ -319,7 +321,7 @@ def analyze(runs: list[dict[str, Any]], artifacts_dir: Path) -> list[dict[str, A
 
     for group in groups.values():
         if group["kind"] == "validator":
-            for successful_run in successful_validator_runs:
+            for successful_run in successful_validator_runs.get(group.get("source"), []):
                 sha = str(successful_run.get("headSha") or successful_run.get("head_sha") or f"run:{successful_run.get('databaseId') or successful_run.get('id') or 'unknown'}")
                 if sha in group["runs"]:
                     group["runs"][sha].append("passed")

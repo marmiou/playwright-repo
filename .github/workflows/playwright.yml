@@ -252,13 +252,18 @@ jobs:
               }.get(result, f"⚪ {result.upper()}")
 
           notes = {}
-          if os.environ["EVALS_CHANGED"] != "true":
+          if os.environ["CHANGES_RESULT"] != "success":
+              notes["2"] = "Change detection did not complete"
+              notes["3"] = "Change detection did not complete"
+          elif os.environ["EVALS_CHANGED"] != "true":
               notes["2"] = "No eval files changed"
               notes["3"] = "No eval files changed"
           if os.environ["TESTS_RESULT"] == "skipped":
               notes["4"] = "Blocked by an earlier failure"
           if os.environ.get("GITHUB_REF") != "refs/heads/main" or os.environ.get("GITHUB_EVENT_NAME") != "push":
               notes["5"] = "Runs on main only"
+          elif os.environ["TESTS_RESULT"] != "success":
+              notes["5"] = "Blocked by an earlier failure"
 
           lines = [
               "## CI pipeline",

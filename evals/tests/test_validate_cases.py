@@ -196,7 +196,7 @@ class ValidateSyntheticDatasetTests(unittest.TestCase):
         content = path.read_text(encoding="utf-8")
         content = content.replace(
             f'"skill": "{skill}",',
-            f'"skill": "{skill}",\\n  "skill": "{skill}",',
+            f'"skill": "{skill}",\n  "skill": "{skill}",',
             1,
         )
         path.write_text(content, encoding="utf-8")

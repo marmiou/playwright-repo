@@ -121,7 +121,7 @@ def validate_rubric_weights(root: Path) -> list[str]:
     except OSError as exc:
         return [f"cannot read behavioural-quality rubric: {exc}"]
     parsed: dict[str, int] = {}
-    pattern = re.compile(r"^###\\s+\\d+\\.\\s+(.+?)\\s+—\\s+(\\d+)%$")
+    pattern = re.compile(r"^###\s+\d+\.\s+(.+?)\s+—\s+(\d+)%$")
     for line in lines:
         match = pattern.match(line.strip())
         if not match:
@@ -217,6 +217,8 @@ def check_score(record: dict[str, Any], file: str, errors: list[str]) -> None:
         if not isinstance(item, dict):
             continue
         key = item.get("dimension_id")
+        if not isinstance(key, str):
+            continue
         if key in recorded:
             add(errors, file, f"score.excluded_dimensions contains duplicate dimension {key!r}")
         recorded[key] = (item.get("outcome"), item.get("rationale", ""))
@@ -304,10 +306,13 @@ def check_provenance(record: dict[str, Any], case: dict[str, Any], root: Path, f
     manifest = provenance.get("tooling_manifest")
     if isinstance(tools, list) and isinstance(manifest, list):
         names = [item.get("name") for item in manifest if isinstance(item, dict)]
-        if len(names) != len(set(names)) or len(tools) != len(set(tools)):
-            add(errors, file, "provenance tool lists must not contain duplicate names")
-        if set(tools) != set(names):
-            add(errors, file, "provenance.available_tools must exactly match tooling_manifest names")
+        if not all(isinstance(name, str) for name in names) or not all(isinstance(name, str) for name in tools):
+            add(errors, file, "provenance tool names must be strings")
+        else:
+            if len(names) != len(set(names)) or len(tools) != len(set(tools)):
+                add(errors, file, "provenance tool lists must not contain duplicate names")
+            if set(tools) != set(names):
+                add(errors, file, "provenance.available_tools must exactly match tooling_manifest names")
 
     hashes = provenance.get("skill_instruction_hashes")
     if isinstance(hashes, list):
@@ -316,6 +321,9 @@ def check_provenance(record: dict[str, Any], case: dict[str, Any], root: Path, f
             if not isinstance(item, dict):
                 continue
             skill = item.get("skill")
+            if not isinstance(skill, str):
+                add(errors, file, "skill hash entry must have a string skill identifier")
+                continue
             path = f".claude/skills/{skill}/SKILL.md"
             if skill in seen:
                 add(errors, file, f"duplicate skill instruction hash for {skill!r}")
@@ -341,6 +349,9 @@ def check_provenance(record: dict[str, Any], case: dict[str, Any], root: Path, f
             if not isinstance(item, dict):
                 continue
             name = item.get("rubric")
+            if not isinstance(name, str):
+                add(errors, file, "rubric hash entry must have a string rubric identifier")
+                continue
             expected_path = RUBRICS.get(name)
             if name in seen_rubrics:
                 add(errors, file, f"duplicate rubric hash for {name!r}")
@@ -517,7 +528,7 @@ def check_verdict(record: dict[str, Any], file: str, errors: list[str]) -> None:
         add(errors, file, "evaluation_status COMPLETE cannot be paired with case_verdict NOT RUN")
     if status == "BLOCKED" and isinstance(record.get("case_verdict"), str) and record.get("case_verdict") in {"PASS", "PASS WITH OBSERVATIONS"}:
         add(errors, file, "evaluation_status BLOCKED cannot be paired with a passing case verdict")
-    if status == "NOT RUN" and record.get("case_verdict") not in {"NOT RUN", "FAIL"}:
+    if status == "NOT RUN" and isinstance(record.get("case_verdict"), str) and record.get("case_verdict") not in {"NOT RUN", "FAIL"}:
         add(errors, file, "evaluation_status NOT RUN requires case verdict NOT RUN unless an established failure requires FAIL")
     if critical and governance_verdict != "FAIL":
         add(errors, file, "critical_failure true requires governance verdict FAIL")

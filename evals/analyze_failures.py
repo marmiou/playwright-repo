@@ -35,6 +35,14 @@ def _run_url(run: dict[str, Any]) -> str:
     return str(run.get("url") or "")
 
 
+def _safe_markdown(value: Any, limit: int = MAX_MESSAGE_LENGTH) -> str:
+    """Escape untrusted artifact text before placing it in an issue/report."""
+    text = str(value or "").replace("\\", "\\\\").replace("\r", " ").replace("\n", " ")
+    for character in ("`", "*", "_", "[", "]", "(", ")", "|"):
+        text = text.replace(character, "\\" + character)
+    return text.replace("<", "&lt;").replace(">", "&gt;").replace("@", "@\u200b")[:limit]
+
+
 def _skill_from_failure(failure: dict[str, Any]) -> str | None:
     file_name = str(failure.get("file") or "")
     match = re.search(r"evals/cases/([^/]+)\.json$", file_name)
@@ -367,16 +375,16 @@ def render_report(groups: list[dict[str, Any]], days: int) -> str:
     lines.extend(["", "## Top recurring failures", ""])
     for index, group in enumerate(groups[:MAX_GROUPS], start=1):
         lines.extend([
-            f"### {index}. {group['key']}",
+            f"### {index}. {_safe_markdown(group['key'])}",
             "",
             f"- **Type:** {group['kind']}",
-            f"- **Skill:** {group.get('skill') or 'Not identified'}",
+            f"- **Skill:** {_safe_markdown(group.get('skill') or 'Not identified')}",
             f"- **Failed runs:** {group['failed_run_count']}",
             f"- **Passed runs for same commit:** {group['passed_run_count']}",
             f"- **Classification:** {group['bucket']}",
-            f"- **Confidence:** {group['classification_note']}",
-            f"- **Evidence:** {group['message'] or 'No error message captured.'}",
-            f"- **Suggested next action:** {group['suggested_next_action']}",
+            f"- **Confidence:** {_safe_markdown(group['classification_note'])}",
+            f"- **Evidence:** {_safe_markdown(group['message'] or 'No error message captured.')}",
+            f"- **Suggested next action:** {_safe_markdown(group['suggested_next_action'])}",
         ])
         if group["evidence"]:
             lines.append("- **Run links:** " + ", ".join(group["evidence"]))

@@ -527,7 +527,7 @@ def check_governance(record: dict[str, Any], case_id: str, defaults: dict[str, s
     expected_verdict = (
         "FAIL" if record.get("critical_failure") is True or "FAIL" in outcomes
         else "BLOCKED" if "NE" in outcomes
-        else "PASS" if checks and all(value == "PASS" for value in outcomes)
+        else "PASS" if outcomes and all(value == "PASS" for value in outcomes)
         else None
     )
     if expected_verdict is None:

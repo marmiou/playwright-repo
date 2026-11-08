@@ -318,6 +318,25 @@ class ValidateResultsTests(unittest.TestCase):
         self.write_record(record)
         self.assertTrue(any("duplicate governance check" in error for error in self.validate()))
 
+    def test_governance_pass_is_rejected_when_no_checks_are_applicable(self) -> None:
+        record = copy.deepcopy(self.record)
+        checks = record["governance_assessment"]["checks"]
+        overrides = []
+        for check in checks:
+            check_id = check["check_id"]
+            check["applicability"] = "NOT_APPLICABLE"
+            check["outcome"] = "N/A"
+            overrides.append({
+                "check_id": check_id,
+                "default_applicable": True,
+                "revised_applicable": False,
+                "evidence": ["trace:case-scope-review"],
+                "rationale": "The observed case scope does not trigger this control.",
+            })
+        record["governance_assessment"]["applicability_overrides"] = overrides
+        self.write_record(record)
+        self.assertTrue(any("at least one applicable check" in error for error in self.validate()))
+
     def test_governance_pass_is_invalid_when_applicable_check_is_not_evaluable(self) -> None:
         record = copy.deepcopy(self.record)
         record["governance_assessment"]["checks"][0]["outcome"] = "NE"

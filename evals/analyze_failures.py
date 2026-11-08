@@ -266,7 +266,11 @@ def analyze(runs: list[dict[str, Any]], artifacts_dir: Path) -> list[dict[str, A
         playwright = root / "playwright" / "results.json"
         behavioural_files = list(root.glob("behavioural/**/*.json"))
 
-        groups_before_run = len(groups)
+        failed_observations_before = sum(
+            observation["outcome"] in {"failed", "flaky"}
+            for group in groups.values()
+            for observation in group["observations"]
+        )
         if validator.is_file():
             payload = _read_json(validator)
             if isinstance(payload, dict) and payload.get("status") == "passed":
@@ -277,7 +281,15 @@ def analyze(runs: list[dict[str, Any]], artifacts_dir: Path) -> list[dict[str, A
         for file in behavioural_files:
             _parse_future_behavioural(file, run, groups)
 
-        if str(run.get("conclusion") or "").lower() == "failure" and len(groups) == groups_before_run:
+        failed_observations_after = sum(
+            observation["outcome"] in {"failed", "flaky"}
+            for group in groups.values()
+            for observation in group["observations"]
+        )
+        if (
+            str(run.get("conclusion") or "").lower() == "failure"
+            and failed_observations_after == failed_observations_before
+        ):
             failure = {
                 "test_key": "pipeline:failure-without-diagnostic-artifacts",
                 "message": "The CI run failed but no failing validator or Playwright result artifact was available. Inspect the job logs to identify the failing stage.",

@@ -115,7 +115,8 @@ def _record(
     })
     sha = str(run.get("headSha") or run.get("head_sha") or "unknown-sha")
     group["observations"].append({"sha": sha, "outcome": outcome})
-    group["runs"].setdefault(sha, []).append(outcome)
+    outcomes = ["failed", "passed"] if outcome == "flaky" else [outcome]
+    group["runs"].setdefault(sha, []).extend(outcomes)
     url = _run_url(run)
     if url and url not in group["evidence"]:
         group["evidence"].append(url)
@@ -217,7 +218,7 @@ def _parse_playwright(
             kind="playwright",
             run=run,
             failure=failure,
-            outcome="failed" if test["outcome"] == "failed" else "passed",
+            outcome=test["outcome"],
         )
 
 

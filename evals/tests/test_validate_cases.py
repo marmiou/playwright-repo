@@ -171,6 +171,39 @@ class ValidateSyntheticDatasetTests(unittest.TestCase):
         errors = validate_repository(self.root)
         self.assertTrue(any("schema validation" in error for error in errors), errors)
 
+    def test_allowed_and_forbidden_overlap_is_rejected(self) -> None:
+        skill = SKILL_IDS[0]
+        data = self._read_case_file(skill)
+        data["cases"][3]["routing_expectation"]["allowed_companion_skills"] = [skill]
+        self._write_case_file(skill, data)
+
+        errors = validate_repository(self.root)
+        self.assertTrue(any("both allowed_companion_skills and forbidden_skills" in error for error in errors), errors)
+
+    def test_skill_frontmatter_name_must_match_directory(self) -> None:
+        skill_file = self.root / ".claude" / "skills" / SKILL_IDS[0] / "SKILL.md"
+        content = skill_file.read_text(encoding="utf-8").replace(
+            f"name: {SKILL_IDS[0]}", "name: mismatched-name", 1
+        )
+        skill_file.write_text(content, encoding="utf-8")
+
+        errors = validate_repository(self.root)
+        self.assertTrue(any("frontmatter name" in error for error in errors), errors)
+
+    def test_duplicate_json_object_keys_are_rejected(self) -> None:
+        skill = SKILL_IDS[0]
+        path = self._case_file(skill)
+        content = path.read_text(encoding="utf-8")
+        content = content.replace(
+            f'"skill": "{skill}",',
+            f'"skill": "{skill}",\\n  "skill": "{skill}",',
+            1,
+        )
+        path.write_text(content, encoding="utf-8")
+
+        errors = validate_repository(self.root)
+        self.assertTrue(any("duplicate JSON object key" in error for error in errors), errors)
+
     def test_extra_skill_without_dataset_is_rejected(self) -> None:
         extra_skill = self.root / ".claude" / "skills" / "unexpected-skill"
         extra_skill.mkdir()

@@ -308,20 +308,23 @@ jobs:
                       for suite in suites or []:
                           for spec in suite.get("specs", []):
                               for test in spec.get("tests", []):
-                                  for result in test.get("results", []):
-                                      if result.get("status") in {"failed", "timedOut", "interrupted"}:
-                                          title = " › ".join(
-                                              part for part in [suite.get("title"), spec.get("title")] if part
-                                          )
-                                          error = result.get("error")
-                                          message = (
-                                              error.get("message", result.get("status"))
-                                              if isinstance(error, dict)
-                                              else str(error or result.get("status"))
-                                          )
-                                          failures.append(
-                                              f"- **Playwright · {title or spec.get('file', 'test')}**: {message}"
-                                          )
+                                  results = test.get("results", [])
+                                  if not results:
+                                      continue
+                                  result = results[-1]
+                                  if result.get("status") in {"failed", "timedOut", "interrupted"}:
+                                      title = " › ".join(
+                                          part for part in [suite.get("title"), spec.get("title")] if part
+                                      )
+                                      error = result.get("error")
+                                      message = (
+                                          error.get("message", result.get("status"))
+                                          if isinstance(error, dict)
+                                          else str(error or result.get("status"))
+                                      )
+                                      failures.append(
+                                          f"- **Playwright · {title or spec.get('file', 'test')}**: {message}"
+                                      )
                           visit(suite.get("suites", []))
                   visit(payload.get("suites", []))
               except (OSError, json.JSONDecodeError):

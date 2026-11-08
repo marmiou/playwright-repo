@@ -80,6 +80,32 @@ class AnalyzeFailuresTests(unittest.TestCase):
         self.assertEqual(groups[0]["failed_run_count"], 1)
         self.assertIn("https://example.test/runs/201", groups[0]["evidence"])
 
+
+    def test_evaluation_result_validator_failure_is_aggregated(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            results = root / "501" / "eval-results"
+            results.mkdir(parents=True)
+            (results / "results.json").write_text(json.dumps({
+                "status": "failed",
+                "record_count": 1,
+                "failure_count": 1,
+                "failures": [{
+                    "file": "evals/results/run-1.json",
+                    "rule": "verdict_integrity",
+                    "message": "case_verdict must be FAIL under documented precedence",
+                }],
+            }), encoding="utf-8")
+            groups = analyze([{
+                "databaseId": 501,
+                "headSha": "result-validator-sha",
+                "url": "https://example.test/runs/501",
+            }], root)
+
+        self.assertEqual(len(groups), 1)
+        self.assertIn("verdict_integrity", groups[0]["key"])
+        self.assertIn("case_verdict must be FAIL", groups[0]["message"])
+
     def test_missing_artifacts_are_skipped(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             groups = analyze([{"databaseId": 301, "headSha": "missing"}], Path(directory))

@@ -286,6 +286,8 @@ def analyze(runs: list[dict[str, Any]], artifacts_dir: Path) -> list[dict[str, A
     results = []
     for group in groups.values():
         outcomes = [outcome for run_outcomes in group["runs"].values() for outcome in run_outcomes]
+        if "failed" not in outcomes:
+            continue
         failed_runs = sum(outcome == "failed" for outcome in outcomes)
         passed_runs = sum(outcome == "passed" for outcome in outcomes)
         mixed = any("failed" in values and "passed" in values for values in group["runs"].values())

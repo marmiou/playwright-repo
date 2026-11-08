@@ -178,9 +178,12 @@ def check_score(record: dict[str, Any], file: str, errors: list[str]) -> None:
     weighted = Decimal(0)
     excluded: dict[str, tuple[str, str]] = {}
     for item in dimensions:
-        if not isinstance(item, dict) or item.get("dimension_id") not in WEIGHTS:
+        if not isinstance(item, dict):
             continue
-        key, weight = item["dimension_id"], Decimal(WEIGHTS[item["dimension_id"]])
+        key = item.get("dimension_id")
+        if not isinstance(key, str) or key not in WEIGHTS:
+            continue
+        weight = Decimal(WEIGHTS[key])
         outcome = item.get("outcome")
         if item.get("applicability") == "APPLICABLE":
             applicable += weight
@@ -258,15 +261,18 @@ def check_reference_notes(record: dict[str, Any], file: str, errors: list[str]) 
     for field in ("prompt_context_reference", "raw_trace_reference", "artifact_reference"):
         if provenance.get(field) is None:
             missing.append(field)
-    for item in record.get("expectation_assessments", []):
+    expectation_items = record.get("expectation_assessments", [])
+    for item in expectation_items if isinstance(expectation_items, list) else []:
         if isinstance(item, dict) and item.get("evidence") == []:
             missing.append(f"expectation {item.get('index')}")
-    for item in record.get("behavioural_dimensions", []):
+    dimension_items = record.get("behavioural_dimensions", [])
+    for item in dimension_items if isinstance(dimension_items, list) else []:
         if isinstance(item, dict) and item.get("evidence") == []:
             missing.append(f"dimension {item.get('dimension_id')}")
     governance = record.get("governance_assessment")
     if isinstance(governance, dict):
-        for item in governance.get("checks", []):
+        check_items = governance.get("checks", [])
+        for item in check_items if isinstance(check_items, list) else []:
             if isinstance(item, dict) and item.get("evidence") == []:
                 missing.append(f"governance {item.get('check_id')}")
     adjudication = record.get("human_adjudication")
@@ -354,10 +360,12 @@ def check_provenance(record: dict[str, Any], case: dict[str, Any], root: Path, f
         value = provenance.get(field)
         if isinstance(value, str):
             check_reference(value, root, file, errors)
+    governance_record = record.get("governance_assessment")
+    governance_checks = governance_record.get("checks", []) if isinstance(governance_record, dict) else []
     collections = [
         record.get("expectation_assessments", []),
         record.get("behavioural_dimensions", []),
-        (record.get("governance_assessment") or {}).get("checks", []),
+        governance_checks,
         [record.get("human_adjudication", {})],
     ]
     for collection in collections:
@@ -368,7 +376,8 @@ def check_provenance(record: dict[str, Any], case: dict[str, Any], root: Path, f
                         check_reference(reference, root, file, errors)
     governance = record.get("governance_assessment")
     if isinstance(governance, dict):
-        for override in governance.get("applicability_overrides", []):
+        override_items = governance.get("applicability_overrides", [])
+        for override in override_items if isinstance(override_items, list) else []:
             if isinstance(override, dict):
                 for reference in override.get("evidence", []):
                     check_reference(reference, root, file, errors)
@@ -396,6 +405,8 @@ def check_governance(record: dict[str, Any], case_id: str, defaults: dict[str, s
     for item in checks:
         if isinstance(item, dict):
             key = item.get("check_id")
+            if not isinstance(key, str):
+                continue
             if key in check_map:
                 add(errors, file, f"duplicate governance check {key!r}")
             check_map[key] = item
@@ -404,6 +415,8 @@ def check_governance(record: dict[str, Any], case_id: str, defaults: dict[str, s
         if not isinstance(item, dict):
             continue
         key = item.get("check_id")
+        if not isinstance(key, str):
+            continue
         if key in override_map:
             add(errors, file, f"duplicate governance applicability override {key!r}")
         override_map[key] = item
@@ -462,7 +475,7 @@ def check_verdict(record: dict[str, Any], file: str, errors: list[str]) -> None:
     critical = record.get("critical_failure") is True
     failure = (
         critical or governance_verdict == "FAIL"
-        or any(value in {"FAIL", "PARTIAL"} for value in outcomes)
+        or any(isinstance(value, str) and value in {"FAIL", "PARTIAL"} for value in outcomes)
         or any(isinstance(item.get("outcome"), int) and not isinstance(item.get("outcome"), bool) and item["outcome"] < 3 for item in mandatory_dimensions)
     )
     evidence_gap = (
@@ -475,10 +488,11 @@ def check_verdict(record: dict[str, Any], file: str, errors: list[str]) -> None:
         add(errors, file, "evaluation_status COMPLETE is invalid while mandatory evidence is unavailable")
     if status == "BLOCKED" and not evidence_gap:
         add(errors, file, "evaluation_status BLOCKED requires a mandatory evidence gap")
-    if status in {"BLOCKED", "NOT RUN"} and not str(record.get("evaluation_status_rationale") or "").strip():
+    if isinstance(status, str) and status in {"BLOCKED", "NOT RUN"} and not str(record.get("evaluation_status_rationale") or "").strip():
         add(errors, file, f"evaluation_status {status} requires evaluation_status_rationale")
-    if record.get("task_status") in {"BLOCKED", "PARTIALLY_COMPLETED", "FAILED", "NOT_STARTED"} and not str(record.get("task_status_rationale") or "").strip():
-        add(errors, file, f"task_status {record.get('task_status')} requires task_status_rationale")
+    task_status = record.get("task_status")
+    if isinstance(task_status, str) and task_status in {"BLOCKED", "PARTIALLY_COMPLETED", "FAILED", "NOT_STARTED"} and not str(record.get("task_status_rationale") or "").strip():
+        add(errors, file, f"task_status {task_status} requires task_status_rationale")
 
     if failure:
         expected = "FAIL"
@@ -501,7 +515,7 @@ def check_verdict(record: dict[str, Any], file: str, errors: list[str]) -> None:
         add(errors, file, "evaluation_status COMPLETE cannot be paired with governance NOT RUN")
     if status == "COMPLETE" and record.get("case_verdict") == "NOT RUN":
         add(errors, file, "evaluation_status COMPLETE cannot be paired with case_verdict NOT RUN")
-    if status == "BLOCKED" and record.get("case_verdict") in {"PASS", "PASS WITH OBSERVATIONS"}:
+    if status == "BLOCKED" and isinstance(record.get("case_verdict"), str) and record.get("case_verdict") in {"PASS", "PASS WITH OBSERVATIONS"}:
         add(errors, file, "evaluation_status BLOCKED cannot be paired with a passing case verdict")
     if status == "NOT RUN" and record.get("case_verdict") not in {"NOT RUN", "FAIL"}:
         add(errors, file, "evaluation_status NOT RUN requires case verdict NOT RUN unless an established failure requires FAIL")
@@ -556,7 +570,8 @@ def validate_results(root: Path, results_dir: Path) -> tuple[list[str], int]:
         dimensions = record.get("behavioural_dimensions")
         if isinstance(dimensions, list):
             ids = [item.get("dimension_id") for item in dimensions if isinstance(item, dict)]
-            if set(ids) != DIMENSIONS or len(ids) != len(DIMENSIONS) or len(ids) != len(set(ids)):
+            valid_ids = all(isinstance(value, str) for value in ids)
+            if not valid_ids or set(ids) != DIMENSIONS or len(ids) != len(DIMENSIONS) or len(ids) != len(set(ids)):
                 add(errors, relative, "behavioural dimensions must contain all eight dimension IDs exactly once")
             for item in dimensions:
                 if isinstance(item, dict) and item.get("dimension_id") == "correctness" and (item.get("applicability") != "APPLICABLE" or item.get("mandatory") is not True):

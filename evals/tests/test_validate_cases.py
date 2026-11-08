@@ -7,6 +7,9 @@ import shutil
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
+from unittest.mock import patch
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -14,6 +17,7 @@ from validate_cases import (
     _failure_details,
     _github_error_annotation,
     _write_results,
+    main,
     validate_repository,
 )
 
@@ -264,6 +268,26 @@ class ValidatorReportingTests(unittest.TestCase):
         self.assertEqual(payload["status"], "failed")
         self.assertEqual(payload["failure_count"], 1)
         self.assertEqual(payload["failures"], failures)
+
+
+    def test_main_prints_annotation_and_writes_failure_json(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output_path = Path(directory) / "results.json"
+            stdout = StringIO()
+            errors = ["evals/cases/example.json: case 'example-1' has invalid expectation"]
+            with patch("validate_cases.validate_repository", return_value=errors), patch(
+                "sys.argv", ["validate_cases.py", "--results-file", str(output_path)]
+            ), redirect_stdout(stdout):
+                exit_code = main()
+
+            payload = json.loads(output_path.read_text(encoding="utf-8"))
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn(
+            "::error file=evals/cases/example.json,title=dataset_invariant::case 'example-1' has invalid expectation",
+            stdout.getvalue(),
+        )
+        self.assertEqual(payload["failures"][0]["case_id"], "example-1")
 
     def test_empty_results_file_records_pass(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

@@ -38,6 +38,8 @@ def _run_url(run: dict[str, Any]) -> str:
 def _skill_from_failure(failure: dict[str, Any]) -> str | None:
     file_name = str(failure.get("file") or "")
     match = re.search(r"evals/cases/([^/]+)\.json$", file_name)
+    if not match:
+        match = re.search(r"\.claude/skills/([^/]+)/SKILL\.md$", file_name)
     if match:
         return match.group(1)
     case_id = str(failure.get("case_id") or "")

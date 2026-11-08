@@ -243,6 +243,12 @@ jobs:
               ("5", "Publish Allure report", os.environ["DEPLOY_RESULT"], ""),
           ]
 
+          def safe_text(value, limit=500):
+              text = str(value or "").replace("\\", "\\\\").replace("\r", " ").replace("\n", " ")
+              for character in ("`", "*", "_", "[", "]", "(", ")", "|"):
+                  text = text.replace(character, "\\" + character)
+              return text.replace("<", "&lt;").replace(">", "&gt;").replace("@", "@\u200b")[:limit]
+
           def result_label(result):
               return {
                   "success": "✅ PASS",
@@ -294,8 +300,9 @@ jobs:
                   payload = json.loads(eval_path.read_text(encoding="utf-8"))
                   for item in payload.get("failures", []):
                       failures.append(
-                          f"- **Validator · {item.get('case_id') or 'dataset'}** "
-                          f"({item.get('file') or 'unknown file'}): {item.get('message', 'No message')}"
+                          f"- **Validator · {safe_text(item.get('case_id') or 'dataset')}** "
+                          f"({safe_text(item.get('file') or 'unknown file')}): "
+                          f"{safe_text(item.get('message', 'No message'))}"
                       )
               except (OSError, json.JSONDecodeError):
                   failures.append("- Validator results JSON could not be parsed.")
@@ -323,7 +330,7 @@ jobs:
                                           else str(error or result.get("status"))
                                       )
                                       failures.append(
-                                          f"- **Playwright · {title or spec.get('file', 'test')}**: {message}"
+                                          f"- **Playwright · {safe_text(title or spec.get('file', 'test'))}**: {safe_text(message)}"
                                       )
                           visit(suite.get("suites", []))
                   visit(payload.get("suites", []))

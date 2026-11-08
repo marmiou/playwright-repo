@@ -294,6 +294,21 @@ class ValidateResultsTests(unittest.TestCase):
         self.write_record(record)
         self.assertTrue(any("date-time" in error for error in self.validate()))
 
+
+    def test_malformed_record_shapes_report_schema_errors_without_crashing(self) -> None:
+        record = copy.deepcopy(self.record)
+        record["expectation_assessments"] = None
+        record["governance_assessment"]["applicability_overrides"] = None
+        self.write_record(record)
+        errors = self.validate()
+        self.assertTrue(any("schema validation" in error for error in errors))
+
+    def test_configuration_must_use_canonical_json_serialization(self) -> None:
+        record = copy.deepcopy(self.record)
+        record["provenance"]["configuration"] = "{ }"
+        self.write_record(record)
+        self.assertTrue(any("canonical JSON serialization" in error for error in self.validate()))
+
     def test_duplicate_json_object_keys_are_rejected(self) -> None:
         path = self.results / "duplicate.json"
         path.write_text('{"case_id":"one","case_id":"two"}', encoding="utf-8")

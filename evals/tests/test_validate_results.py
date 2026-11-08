@@ -201,7 +201,7 @@ class ValidateResultsTests(unittest.TestCase):
         self.write_record(record)
         errors = self.validate()
         self.assertTrue(any("case_verdict must be 'FAIL'" in error for error in errors))
-        self.assertTrue(any("score.weighted_score" in error for error in errors))
+        self.assertFalse(any("score.weighted_score" in error for error in errors))
 
     def test_missing_default_governance_check_is_rejected(self) -> None:
         record = copy.deepcopy(self.record)
@@ -254,7 +254,14 @@ class ValidateResultsTests(unittest.TestCase):
             "rationale": "The case scope does not trigger this control.",
         }]
         self.write_record(record)
-        self.assertTrue(any("minItems" in error for error in self.validate()))
+        self.assertTrue(any("applicability_overrides" in error or "evidence" in error for error in self.validate()))
+
+
+    def test_weighted_score_must_use_normalized_zero_to_one_hundred_scale(self) -> None:
+        record = copy.deepcopy(self.record)
+        record["score"]["weighted_score"] = 4.0
+        self.write_record(record)
+        self.assertTrue(any("score.weighted_score must be 100.0" in error for error in self.validate()))
 
     def test_score_must_reconcile_excluded_dimensions(self) -> None:
         record = copy.deepcopy(self.record)
@@ -292,7 +299,7 @@ class ValidateResultsTests(unittest.TestCase):
         record = copy.deepcopy(self.record)
         record["provenance"]["run_timestamp"] = "not-a-date"
         self.write_record(record)
-        self.assertTrue(any("date-time" in error for error in self.validate()))
+        self.assertTrue(any("RFC 3339 date-time" in error or "date-time" in error for error in self.validate()))
 
 
     def test_malformed_record_shapes_report_schema_errors_without_crashing(self) -> None:

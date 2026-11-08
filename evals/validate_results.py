@@ -300,6 +300,20 @@ def check_provenance(record: dict[str, Any], case: dict[str, Any], root: Path, f
     provenance = record.get("provenance")
     if not isinstance(provenance, dict):
         return
+    revision = provenance.get("repository_commit")
+    if not isinstance(revision, str) or not re.fullmatch(r"[a-fA-F0-9]{40,64}", revision):
+        add(errors, file, "provenance.repository_commit must be a 40- or 64-character commit hash")
+    timestamp = provenance.get("run_timestamp")
+    timestamp_pattern = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$"
+    if not isinstance(timestamp, str) or not re.fullmatch(timestamp_pattern, timestamp):
+        add(errors, file, "provenance.run_timestamp must be an RFC 3339 date-time with timezone")
+    else:
+        try:
+            parsed_timestamp = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            if parsed_timestamp.tzinfo is None:
+                raise ValueError("timezone is required")
+        except ValueError:
+            add(errors, file, "provenance.run_timestamp must be a valid RFC 3339 date-time")
     try:
         config = json.loads(provenance.get("configuration", ""))
     except (TypeError, json.JSONDecodeError):

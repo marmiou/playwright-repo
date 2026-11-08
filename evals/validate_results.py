@@ -146,7 +146,7 @@ def verify_hash_at_revision(root: Path, revision: str, path: str, digest: str, f
     git_dir = root / ".git"
     if not git_dir.exists():
         return
-    if not re.fullmatch(r"[a-fA-F0-9]{40,64}", revision or ""):
+    if not re.fullmatch(r"(?:[a-fA-F0-9]{40}|[a-fA-F0-9]{64})", revision or ""):
         add(errors, file, "provenance.repository_commit must be a 40- or 64-character commit hash")
         return
     result = subprocess.run(

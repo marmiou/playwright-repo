@@ -6,6 +6,7 @@ import copy
 import hashlib
 import json
 import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -38,7 +39,7 @@ def make_repository(root: Path) -> dict:
             "index": index,
             "expectation": text,
             "outcome": "PASS",
-            "evidence": ["repo:evals/cases/add-api-test.json"],
+            "evidence": ["trace:observed-agent-output"],
             "rationale": "The supplied evidence directly supports this expectation.",
         }
         for index, text in enumerate(case["expectations"], start=1)
@@ -49,7 +50,7 @@ def make_repository(root: Path) -> dict:
             "applicability": "APPLICABLE",
             "mandatory": True,
             "outcome": 4,
-            "evidence": ["repo:evals/rubrics/behavioural-quality.md"],
+            "evidence": ["trace:observed-evaluator-evidence"],
             "rationale": "The assessed output meets the dimension standard.",
         }
         for name in (
@@ -63,7 +64,7 @@ def make_repository(root: Path) -> dict:
             "check_id": check_id,
             "applicability": "APPLICABLE",
             "outcome": "PASS",
-            "evidence": ["repo:evals/rubrics/governance-and-safety.md"],
+            "evidence": ["trace:observed-governance-evidence"],
             "rationale": "The evidence supports compliance with this control.",
         }
         for check_id in DEFAULT_CHECKS
@@ -161,6 +162,98 @@ class ValidateResultsTests(unittest.TestCase):
         errors, count = validate_results(self.root, Path("evals/results"))
         self.assertEqual(errors, [])
         self.assertEqual(count, 0)
+
+    def test_missing_results_directory_is_rejected(self) -> None:
+        missing = self.root / "evals/missing-results"
+        errors, count = validate_results(self.root, Path("evals/missing-results"))
+        self.assertEqual(count, 0)
+        self.assertTrue(any("results directory does not exist" in error for error in errors))
+
+    def test_results_path_must_be_a_directory(self) -> None:
+        path = self.root / "evals/not-a-directory"
+        path.write_text("not a directory", encoding="utf-8")
+        errors, count = validate_results(self.root, Path("evals/not-a-directory"))
+        self.assertEqual(count, 0)
+        self.assertTrue(any("results path is not a directory" in error for error in errors))
+
+    def test_result_file_symlink_cannot_escape_repository(self) -> None:
+        outside = Path(self.temp.name).parent / "outside-result.json"
+        outside.write_text("{}", encoding="utf-8")
+        link = self.results / "escape.json"
+        try:
+            link.symlink_to(outside)
+        except (OSError, NotImplementedError):
+            self.skipTest("symlinks are unavailable in this environment")
+        try:
+            errors, count = validate_results(self.root, Path("evals/results"))
+        finally:
+            outside.unlink(missing_ok=True)
+        self.assertEqual(count, 0)
+        self.assertTrue(any("resolves outside the repository" in error for error in errors))
+
+    def test_pass_expectation_requires_evidence(self) -> None:
+        record = copy.deepcopy(self.record)
+        record["expectation_assessments"][0]["evidence"] = []
+        self.write_record(record)
+        self.assertTrue(any("expectation 1 outcome PASS requires" in error for error in self.validate()))
+
+    def test_numeric_dimension_score_requires_evidence(self) -> None:
+        record = copy.deepcopy(self.record)
+        record["behavioural_dimensions"][0]["evidence"] = []
+        self.write_record(record)
+        self.assertTrue(any("dimension correctness numeric score requires" in error for error in self.validate()))
+
+    def test_governance_pass_requires_evidence(self) -> None:
+        record = copy.deepcopy(self.record)
+        record["governance_assessment"]["checks"][0]["evidence"] = []
+        self.write_record(record)
+        self.assertTrue(any("governance check G3 outcome PASS requires" in error for error in self.validate()))
+
+    def test_unknown_evidence_reference_scheme_is_rejected(self) -> None:
+        record = copy.deepcopy(self.record)
+        record["expectation_assessments"][0]["evidence"] = ["unknown:opaque-reference"]
+        self.write_record(record)
+        self.assertTrue(any("unsupported evidence reference format" in error for error in self.validate()))
+
+    def test_repository_commit_hash_must_be_exact_sha_length(self) -> None:
+        record = copy.deepcopy(self.record)
+        record["provenance"]["repository_commit"] = "a" * 48
+        self.write_record(record)
+        self.assertTrue(any("40- or 64-character commit hash" in error for error in self.validate()))
+
+    def _initialise_git_repository(self) -> str:
+        commands = [
+            ["git", "-C", str(self.root), "init", "-q"],
+            ["git", "-C", str(self.root), "config", "user.email", "qe-tests@example.invalid"],
+            ["git", "-C", str(self.root), "config", "user.name", "QE Validator Tests"],
+            ["git", "-C", str(self.root), "add", "."],
+            ["git", "-C", str(self.root), "commit", "-qm", "test fixture"],
+        ]
+        for command in commands:
+            subprocess.run(command, check=True, capture_output=True)
+        return subprocess.run(
+            ["git", "-C", str(self.root), "rev-parse", "HEAD"],
+            check=True, capture_output=True, text=True,
+        ).stdout.strip()
+
+    def test_hashes_are_verified_against_a_real_git_revision(self) -> None:
+        revision = self._initialise_git_repository()
+        record = copy.deepcopy(self.record)
+        record["provenance"]["repository_commit"] = revision
+        for item in record["provenance"]["skill_instruction_hashes"] + record["provenance"]["rubric_hashes"]:
+            item["sha256"] = hashlib.sha256((self.root / item["path"]).read_bytes()).hexdigest()
+        self.write_record(record)
+        self.assertEqual(self.validate(), [])
+
+    def test_hash_mismatch_at_a_real_git_revision_is_rejected(self) -> None:
+        revision = self._initialise_git_repository()
+        record = copy.deepcopy(self.record)
+        record["provenance"]["repository_commit"] = revision
+        for item in record["provenance"]["skill_instruction_hashes"] + record["provenance"]["rubric_hashes"]:
+            item["sha256"] = hashlib.sha256((self.root / item["path"]).read_bytes()).hexdigest()
+        record["provenance"]["skill_instruction_hashes"][0]["sha256"] = "0" * 64
+        self.write_record(record)
+        self.assertTrue(any("does not match provenance.repository_commit" in error for error in self.validate()))
 
     def test_unknown_case_id_is_rejected(self) -> None:
         record = copy.deepcopy(self.record)

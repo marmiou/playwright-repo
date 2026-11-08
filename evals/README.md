@@ -1,6 +1,6 @@
 # QE Agent Skill Evaluations
 
-This directory evaluates the repository's ten Claude Code QE skills. It is a **test design and evidence repository**, not a runner. No model calls, skill executions, generated results, dependencies, MCP servers or CI workflow changes are introduced by this framework.
+This directory contains the test design, case dataset and deterministic Tier 1 validation tooling for the repository's ten Claude Code QE skills. It is **not a model/skill execution runner**: Tier 1 validation checks case structure and repository consistency, makes no model calls and does not execute skills. The validator uses a pinned Python `jsonschema` dependency and runs in a dedicated GitHub Actions workflow. No MCP servers or provider integrations are configured.
 
 ## Scope and inventory
 
@@ -23,7 +23,7 @@ The case file contains:
 - `source.path` and `source.description`: the exact skill instruction location and description under evaluation. Keep the description synchronised with the skill's frontmatter.
 - `cases[]`: stable `id`, `type`, verbatim `prompt`, `expected_routing`, observable `expectations[]` and optional `fixture`.
 
-The JSON Schema cannot by itself enforce dataset-wide or repository-dependent rules. The future Tier 1 validator must additionally check unique case IDs across files, filename/skill identity, exact source-description synchronisation, target-skill exclusion in negative cases, disjoint allowed/forbidden skill lists, and fixture-path resolution.
+The JSON Schema cannot by itself enforce dataset-wide or repository-dependent rules. The Tier 1 validator additionally checks unique case IDs across files, filename/skill identity, exact source-path and source-description synchronisation, skill inventory consistency, target-skill exclusion in negative cases, disjoint allowed/forbidden skill lists, valid skill references, and fixture-path resolution.
 
 `expected_routing` remains `activate` for positive and behavioural cases, and `do_not_activate` for negative cases. Each negative case also has `routing_expectation`:
 
@@ -42,15 +42,23 @@ Fixtures are optional. Keep them synthetic, minimal, deterministic, and clearly 
 
 ### Tier 1 — Structural (deterministic, no model)
 
-Manually or with a future lightweight validator check:
-- Validate each case file against `schemas/case.schema.json` (Draft 2020-12).
-- Check exactly ten skill files, with three positive, two negative and one behavioural case per file.
-- Check case IDs are unique across the entire dataset.
-- Check filename/skill identity and source path/description synchronisation with the current repository.
-- Negative routing metadata is complete and internally consistent.
-- Expectations are observable and case-specific, not generic praise.
-- Fixture references resolve; fixtures contain no secrets or real personal data.
-- No case asks the executor to bypass repository safety, permissions or destructive-action restrictions.
+Run the validator and its unit tests from the repository root:
+
+```bash
+python3 -m pip install -r evals/requirements.txt
+python3 -m unittest discover -s evals/tests -v
+python3 evals/validate_cases.py
+```
+
+The dedicated GitHub Actions workflow runs the same checks when evaluation cases or skill instructions change. Tier 1 checks:
+- Validate every case file against `schemas/case.schema.json` using JSON Schema Draft 2020-12 and format checking.
+- Check exactly ten skill files and matching case files, with three positive, two negative and one behavioural case per skill.
+- Reject duplicate JSON object keys and globally duplicate case IDs.
+- Check filename/skill identity and source path/description synchronisation with the current repository skill frontmatter.
+- Check negative routing metadata, target-skill exclusion, referenced skill IDs and allowed/forbidden disjointness.
+- Resolve optional fixture paths safely within `evals/` and require referenced files to exist.
+
+The validator does not judge whether expectations are well-written or whether fixture contents contain secrets or personal data; those remain human-review responsibilities. Structural validity says nothing about model behaviour. A structurally valid test can still be a poor test.
 
 Structural validity says nothing about model behaviour. A structurally valid test can still be a poor test.
 
@@ -191,7 +199,7 @@ The case schema can later add tool expectations without binding to a provider: `
 - LLM-as-judge scoring is itself fallible. Use criterion-level evidence, independent review and human adjudication for consequential findings.
 - One behavioural case per skill is a minimum smoke evaluation, not sufficient statistical confidence.
 - The current set does not establish whether a skill improves output compared with the same task without that skill. A controlled skill-disabled baseline (ablation) is required before making incremental-contribution claims.
-- No automated runner, JSON Schema validator, CI job or provider adapter is included yet. Add these only after the case format and rubric have been independently reviewed and exercised manually.
+- The Tier 1 structural validator, its unit tests and a dedicated CI workflow are implemented. There is still no model/skill execution runner, evaluation-result validator, verdict engine, provider adapter or automated Tier 2/Tier 3 benchmark. Those remain separate future steps and must not be implied by a passing Tier 1 result.
 
 ## References
 

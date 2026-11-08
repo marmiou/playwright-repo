@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   changes:
-    name: 0 · Detect QE Framework Changes
+    name: 0 · Detect AI QE Framework Changes
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -35,7 +35,7 @@ jobs:
               - '.github/workflows/playwright.yml'
 
   evals-unit:
-    name: 1 · QE Framework — Validator Unit Tests
+    name: 1 · AI QE Framework — Validator Unit Tests
     needs: changes
     if: needs.changes.outputs.evals == 'true'
     runs-on: ubuntu-latest
@@ -58,7 +58,7 @@ jobs:
         run: python -m unittest discover -s evals/tests -v
 
   evals-dataset:
-    name: 2 · QE Framework — Validate Evaluation Dataset
+    name: 2 · AI QE Framework — Validate Evaluation Cases
     needs: changes
     if: needs.changes.outputs.evals == 'true'
     runs-on: ubuntu-latest
@@ -89,8 +89,42 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
 
+  evals-results:
+    name: 3 · AI QE Framework — Validate Evaluation Results
+    needs: changes
+    if: needs.changes.outputs.evals == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: evals/requirements.txt
+
+      - name: Install validator dependency
+        run: python -m pip install -r evals/requirements.txt
+
+      - name: Validate evaluation result records
+        run: python evals/validate_results.py --results-file eval-results-validation/results.json
+
+      - name: Upload result validation
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: eval-results-validation
+          path: eval-results-validation/results.json
+          retention-days: 14
+          if-no-files-found: ignore
+
   lint:
-    name: 3 · Application — Lint & Typecheck
+    name: 4 · Application — Lint
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -106,13 +140,28 @@ jobs:
       - name: Run ESLint
         run: yarn lint
 
+
+  typecheck:
+    name: 5 · Application — Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js and Yarn
+        uses: ./.github/actions/setup
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
       - name: Run TypeScript checks
         run: yarn typecheck
 
   tests:
-    name: 4 · Application — Playwright Tests
-    needs: [lint, evals-unit, evals-dataset]
-    if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    name: 6 · Application — Playwright Tests
+    needs: [changes, lint, typecheck, evals-unit, evals-dataset, evals-results]
+    if: always() && needs.changes.result == 'success' && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -171,7 +220,7 @@ jobs:
           if-no-files-found: ignore
 
   deploy:
-    name: 5 · Application — Publish Allure Report
+    name: 7 · Application — Deploy Allure Report to GitHub Pages
     needs: tests
     if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -197,8 +246,8 @@ jobs:
           publish_dir: allure-report
 
   summary:
-    name: 6 · Pipeline Summary
-    needs: [changes, lint, evals-unit, evals-dataset, tests, deploy]
+    name: 8 · CI Summary
+    needs: [changes, lint, typecheck, evals-unit, evals-dataset, evals-results, tests, deploy]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -210,6 +259,14 @@ jobs:
         with:
           name: eval-validation-results
           path: failure-data/evals
+
+      - name: Download evaluation result validation
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v7
+        with:
+          name: eval-results-validation
+          path: failure-data/eval-results
 
       - name: Download Playwright JSON results
         if: always()
@@ -224,8 +281,10 @@ jobs:
           CHANGES_RESULT: ${{ needs.changes.result }}
           EVALS_CHANGED: ${{ needs.changes.outputs.evals }}
           LINT_RESULT: ${{ needs.lint.result }}
+          TYPECHECK_RESULT: ${{ needs.typecheck.result }}
           UNIT_RESULT: ${{ needs.evals-unit.result }}
           DATASET_RESULT: ${{ needs.evals-dataset.result }}
+          RESULTS_RESULT: ${{ needs.evals-results.result }}
           TESTS_RESULT: ${{ needs.tests.result }}
           DEPLOY_RESULT: ${{ needs.deploy.result }}
         run: |
@@ -235,12 +294,14 @@ jobs:
           from pathlib import Path
 
           statuses = [
-              ("0", "Detect QE Framework Changes", os.environ["CHANGES_RESULT"], ""),
-              ("1", "QE Framework — Validator Unit Tests", os.environ["UNIT_RESULT"], ""),
-              ("2", "QE Framework — Validate Evaluation Dataset", os.environ["DATASET_RESULT"], ""),
-              ("3", "Application — Lint & Typecheck", os.environ["LINT_RESULT"], ""),
-              ("4", "Application — Playwright Tests", os.environ["TESTS_RESULT"], ""),
-              ("5", "Application — Publish Allure Report", os.environ["DEPLOY_RESULT"], ""),
+              ("0", "Detect AI QE Framework Changes", os.environ["CHANGES_RESULT"], ""),
+              ("1", "AI QE Framework — Validator Unit Tests", os.environ["UNIT_RESULT"], ""),
+              ("2", "AI QE Framework — Validate Evaluation Cases", os.environ["DATASET_RESULT"], ""),
+              ("3", "AI QE Framework — Validate Evaluation Results", os.environ["RESULTS_RESULT"], ""),
+              ("4", "Application — Lint", os.environ["LINT_RESULT"], ""),
+              ("5", "Application — Type Check", os.environ["TYPECHECK_RESULT"], ""),
+              ("6", "Application — Playwright Tests", os.environ["TESTS_RESULT"], ""),
+              ("7", "Application — Deploy Allure Report to GitHub Pages", os.environ["DEPLOY_RESULT"], ""),
           ]
 
           def safe_text(value, limit=500):
@@ -259,17 +320,19 @@ jobs:
 
           notes = {}
           if os.environ["CHANGES_RESULT"] != "success":
+              notes["1"] = "Change detection did not complete"
               notes["2"] = "Change detection did not complete"
               notes["3"] = "Change detection did not complete"
           elif os.environ["EVALS_CHANGED"] != "true":
+              notes["1"] = "No eval files changed"
               notes["2"] = "No eval files changed"
               notes["3"] = "No eval files changed"
           if os.environ["TESTS_RESULT"] == "skipped":
-              notes["4"] = "Blocked by an earlier failure"
+              notes["6"] = "Blocked by an earlier failure"
           if os.environ.get("GITHUB_REF") != "refs/heads/main" or os.environ.get("GITHUB_EVENT_NAME") != "push":
-              notes["5"] = "Runs on main only"
+              notes["7"] = "Runs on main only"
           elif os.environ["TESTS_RESULT"] != "success":
-              notes["5"] = "Blocked by an earlier failure"
+              notes["7"] = "Blocked by an earlier failure"
 
           lines = [
               "## CI pipeline",
@@ -279,7 +342,7 @@ jobs:
           ]
           for number, name, result, _ in statuses:
               note = notes.get(number, "")
-              if number in {"2", "3"} and result == "skipped" and not note:
+              if number in {"1", "2", "3"} and result == "skipped" and not note:
                   note = "Blocked by an earlier failure"
               lines.append(f"| {number} | {name} | {result_label(result)} | {note} |")
 
@@ -289,7 +352,7 @@ jobs:
               else "success"
           )
           lines.append(
-              f"| 6 | Pipeline summary | {result_label(summary_result)} | Aggregate required check |"
+              f"| 8 | CI summary | {result_label(summary_result)} | Aggregate required check |"
           )
 
           lines.extend(["", "## Failures", ""])
@@ -306,6 +369,19 @@ jobs:
                       )
               except (OSError, json.JSONDecodeError):
                   failures.append("- Validator results JSON could not be parsed.")
+
+          result_validation_path = Path("failure-data/eval-results/results.json")
+          if result_validation_path.is_file():
+              try:
+                  payload = json.loads(result_validation_path.read_text(encoding="utf-8"))
+                  for item in payload.get("failures", []):
+                      failures.append(
+                          f"- **AI QE Result Validator · {safe_text(item.get('file') or 'result')}** "
+                          f"({safe_text(item.get('rule') or 'integrity')}): "
+                          f"{safe_text(item.get('message', 'No message'))}"
+                      )
+              except (OSError, json.JSONDecodeError):
+                  failures.append("- Evaluation result validation JSON could not be parsed.")
 
           playwright_path = Path("failure-data/playwright/results.json")
           if playwright_path.is_file():

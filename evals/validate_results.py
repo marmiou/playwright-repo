@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 import sys
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
@@ -240,8 +241,9 @@ def check_reference(reference: str, root: Path, file: str, errors: list[str]) ->
             add(errors, file, f"invalid URL evidence reference: {value!r}")
         return
     if value.startswith(("trace:", "artifact:", "run:", "response:")):
-        if not value.split(":", 1)[1].strip():
-            add(errors, file, f"evidence reference has an empty identifier: {value!r}")
+        prefix, identifier = value.split(":", 1)
+        if not identifier.strip() or identifier != identifier.strip():
+            add(errors, file, f"evidence reference has an empty or malformed {prefix} identifier: {value!r}")
         return
     if value.startswith(("repo:", "file:")):
         relative = value.split(":", 1)[1].split("#", 1)[0]
@@ -253,6 +255,40 @@ def check_reference(reference: str, root: Path, file: str, errors: list[str]) ->
         else:
             if not candidate.is_file():
                 add(errors, file, f"evidence reference does not resolve to a repository file: {value!r}")
+        return
+    add(errors, file, f"unsupported evidence reference format: {value!r}")
+
+
+def check_assessment_evidence(record: dict[str, Any], file: str, errors: list[str]) -> None:
+    """Require evidence for every affirmative or scored assessment."""
+    expectations = record.get("expectation_assessments", [])
+    if isinstance(expectations, list):
+        for item in expectations:
+            if isinstance(item, dict) and item.get("outcome") in {"PASS", "PARTIAL", "FAIL"}:
+                if not item.get("evidence"):
+                    add(errors, file, f"expectation {item.get('index')} outcome {item.get('outcome')} requires at least one evidence reference")
+
+    dimensions = record.get("behavioural_dimensions", [])
+    if isinstance(dimensions, list):
+        for item in dimensions:
+            if isinstance(item, dict):
+                outcome = item.get("outcome")
+                if isinstance(outcome, int) and not isinstance(outcome, bool):
+                    if not item.get("evidence"):
+                        add(errors, file, f"dimension {item.get('dimension_id')} numeric score requires at least one evidence reference")
+
+    governance = record.get("governance_assessment")
+    if isinstance(governance, dict):
+        checks = governance.get("checks", [])
+        if isinstance(checks, list):
+            for item in checks:
+                if isinstance(item, dict) and item.get("applicability") == "APPLICABLE" and item.get("outcome") in {"PASS", "FAIL"}:
+                    if not item.get("evidence"):
+                        add(errors, file, f"governance check {item.get('check_id')} outcome {item.get('outcome')} requires at least one evidence reference")
+
+    adjudication = record.get("human_adjudication")
+    if isinstance(adjudication, dict) and adjudication.get("status") == "COMPLETED" and not adjudication.get("evidence"):
+        add(errors, file, "completed human adjudication requires at least one evidence reference")
 
 
 def check_reference_notes(record: dict[str, Any], file: str, errors: list[str]) -> None:
@@ -301,7 +337,7 @@ def check_provenance(record: dict[str, Any], case: dict[str, Any], root: Path, f
     if not isinstance(provenance, dict):
         return
     revision = provenance.get("repository_commit")
-    if not isinstance(revision, str) or not re.fullmatch(r"[a-fA-F0-9]{40,64}", revision):
+    if not isinstance(revision, str) or not re.fullmatch(r"(?:[a-fA-F0-9]{40}|[a-fA-F0-9]{64})", revision):
         add(errors, file, "provenance.repository_commit must be a 40- or 64-character commit hash")
     timestamp = provenance.get("run_timestamp")
     timestamp_pattern = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$"
@@ -567,17 +603,30 @@ def validate_results(root: Path, results_dir: Path) -> tuple[list[str], int]:
     defaults, matrix_errors = governance_defaults(root)
     errors.extend(catalog_errors + matrix_errors + validate_rubric_weights(root))
     directory = results_dir if results_dir.is_absolute() else root / results_dir
-    directory = directory.resolve()
+    try:
+        directory = directory.resolve(strict=True)
+    except OSError:
+        return errors + [f"results directory does not exist: {directory}"], 0
     try:
         directory.relative_to(root)
     except ValueError:
         return errors + ["results directory must be inside the repository"], 0
-    files = sorted(directory.rglob("*.json")) if directory.is_dir() else []
+    if not directory.is_dir():
+        return errors + [f"results path is not a directory: {directory}"], 0
+    files = sorted(directory.rglob("*.json"))
 
     for path in files:
-        relative = path.relative_to(root).as_posix()
         try:
-            record = load_json(path)
+            resolved_path = path.resolve(strict=True)
+            resolved_path.relative_to(root)
+        except (OSError, ValueError):
+            add(errors, path.relative_to(directory).as_posix(), "result file resolves outside the repository or cannot be resolved")
+            continue
+        if not resolved_path.is_file():
+            continue
+        relative = resolved_path.relative_to(root).as_posix()
+        try:
+            record = load_json(resolved_path)
         except (OSError, json.JSONDecodeError, ValueError) as exc:
             add(errors, relative, f"invalid JSON: {exc}")
             continue
@@ -612,6 +661,7 @@ def validate_results(root: Path, results_dir: Path) -> tuple[list[str], int]:
         check_governance(record, case_id, defaults, relative, errors)
         check_verdict(record, relative, errors)
         check_score(record, relative, errors)
+        check_assessment_evidence(record, relative, errors)
         check_provenance(record, case, root, relative, errors)
     return errors, len(files)
 

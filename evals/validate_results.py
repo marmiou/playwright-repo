@@ -327,8 +327,8 @@ def check_provenance(record: dict[str, Any], case: dict[str, Any], root: Path, f
             if not isinstance(item, dict):
                 continue
             skill = item.get("skill")
-            if not isinstance(skill, str):
-                add(errors, file, "skill hash entry must have a string skill identifier")
+            if not isinstance(skill, str) or not re.fullmatch(r"[a-z][a-z0-9-]*", skill):
+                add(errors, file, "skill hash entry must have a valid kebab-case skill identifier")
                 continue
             path = f".claude/skills/{skill}/SKILL.md"
             if skill in seen:
@@ -396,7 +396,8 @@ def check_provenance(record: dict[str, Any], case: dict[str, Any], root: Path, f
         override_items = governance.get("applicability_overrides", [])
         for override in override_items if isinstance(override_items, list) else []:
             if isinstance(override, dict):
-                for reference in override.get("evidence", []):
+                evidence = override.get("evidence", [])
+                for reference in evidence if isinstance(evidence, list) else []:
                     check_reference(reference, root, file, errors)
 
 

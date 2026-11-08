@@ -23,6 +23,16 @@ WEIGHTS = {
     "communication_and_actionability": 5,
 }
 DIMENSIONS = set(WEIGHTS)
+HEADING_TO_DIMENSION = {
+    "correctness": "correctness",
+    "completeness": "completeness",
+    "risk identification": "risk_identification",
+    "traceability": "traceability",
+    "evidence and epistemic discipline": "evidence_and_epistemic_discipline",
+    "maintainability and architecture": "maintainability_and_architecture",
+    "repository convention compliance": "repository_convention_compliance",
+    "communication and actionability": "communication_and_actionability",
+}
 RUBRICS = {
     "behavioural-quality": "evals/rubrics/behavioural-quality.md",
     "governance-and-safety": "evals/rubrics/governance-and-safety.md",
@@ -102,6 +112,53 @@ def governance_defaults(root: Path) -> tuple[dict[str, set[str]], list[str]]:
                     return {}, [f"governance rubric has duplicate matrix row for {case_id}"]
                 result[case_id] = checks
     return (result, []) if result else ({}, ["could not parse governance applicability matrix"])
+
+
+def validate_rubric_weights(root: Path) -> list[str]:
+    path = root / RUBRICS["behavioural-quality"]
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        return [f"cannot read behavioural-quality rubric: {exc}"]
+    parsed: dict[str, int] = {}
+    pattern = re.compile(r"^###\\s+\\d+\\.\\s+(.+?)\\s+—\\s+(\\d+)%$")
+    for line in lines:
+        match = pattern.match(line.strip())
+        if not match:
+            continue
+        dimension = HEADING_TO_DIMENSION.get(match.group(1).casefold())
+        if dimension is None:
+            continue
+        if dimension in parsed:
+            return [f"behavioural-quality rubric contains duplicate weight for {dimension}"]
+        parsed[dimension] = int(match.group(2))
+    if set(parsed) != DIMENSIONS:
+        return ["behavioural-quality rubric weight headings do not cover all eight dimensions"]
+    if parsed != WEIGHTS:
+        return [f"validator weights {WEIGHTS} do not match rubric weights {parsed}"]
+    if sum(parsed.values()) != 100:
+        return ["behavioural-quality rubric dimension weights must total 100"]
+    return []
+
+
+def verify_hash_at_revision(root: Path, revision: str, path: str, digest: str, file: str, errors: list[str]) -> None:
+    git_dir = root / ".git"
+    if not git_dir.exists():
+        return
+    if not re.fullmatch(r"[a-fA-F0-9]{40,64}", revision or ""):
+        add(errors, file, "provenance.repository_commit must be a 40- or 64-character commit hash")
+        return
+    result = subprocess.run(
+        ["git", "-C", str(root), "show", f"{revision}:{path}"],
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        add(errors, file, f"cannot resolve {path} at provenance.repository_commit {revision}")
+        return
+    actual = hashlib.sha256(result.stdout).hexdigest()
+    if actual.casefold() != str(digest).casefold():
+        add(errors, file, f"SHA-256 for {path} does not match provenance.repository_commit")
 
 
 def add(errors: list[str], file: str, message: str) -> None:
@@ -262,6 +319,8 @@ def check_provenance(record: dict[str, Any], case: dict[str, Any], root: Path, f
             digest = item.get("sha256")
             if not isinstance(digest, str) or not re.fullmatch(r"[a-fA-F0-9]{64}", digest):
                 add(errors, file, f"skill hash for {skill!r} is not a SHA-256 value")
+            else:
+                verify_hash_at_revision(root, str(provenance.get("repository_commit", "")), path, digest, file, errors)
         if hashes and case.get("skill") not in seen:
             add(errors, file, f"provenance must include target skill hash {case.get('skill')!r}")
         if not hashes:
@@ -285,6 +344,8 @@ def check_provenance(record: dict[str, Any], case: dict[str, Any], root: Path, f
             digest = item.get("sha256")
             if not isinstance(digest, str) or not re.fullmatch(r"[a-fA-F0-9]{64}", digest):
                 add(errors, file, f"rubric hash for {name!r} is not a SHA-256 value")
+            elif expected_path:
+                verify_hash_at_revision(root, str(provenance.get("repository_commit", "")), expected_path, digest, file, errors)
         if seen_rubrics != set(RUBRICS):
             add(errors, file, "rubric_hashes must contain exactly one entry for each Tier 3 rubric")
 
@@ -357,6 +418,11 @@ def check_governance(record: dict[str, Any], case_id: str, defaults: dict[str, s
                 add(errors, file, f"override for {key} does not match its check applicability")
         if not item.get("evidence"):
             add(errors, file, f"override for {key} requires case-specific evidence references")
+        for reference in item.get("evidence", []) if isinstance(item.get("evidence"), list) else []:
+            if isinstance(reference, str) and not reference.startswith(("repo:", "file:", "https://", "http://", "trace:", "artifact:", "run:", "response:")):
+                add(errors, file, f"override evidence for {key} must be an explicit repository, URL, trace, artifact or response reference")
+            if isinstance(reference, str) and reference.startswith(("repo:evals/cases/", "repo:evals/rubrics/", "file:evals/cases/", "file:evals/rubrics/")):
+                add(errors, file, f"override evidence for {key} must reference case-specific observed evidence, not a case definition or rubric")
 
     for key in required:
         check = check_map.get(key)
@@ -452,7 +518,7 @@ def validate_results(root: Path, results_dir: Path) -> tuple[list[str], int]:
         return errors, 0
     catalog, catalog_errors = case_catalog(root)
     defaults, matrix_errors = governance_defaults(root)
-    errors.extend(catalog_errors + matrix_errors)
+    errors.extend(catalog_errors + matrix_errors + validate_rubric_weights(root))
     directory = results_dir if results_dir.is_absolute() else root / results_dir
     directory = directory.resolve()
     try:

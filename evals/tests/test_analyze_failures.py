@@ -48,6 +48,65 @@ class AnalyzeFailuresTests(unittest.TestCase):
         self.assertEqual(groups[0]["passed_run_count"], 1)
         self.assertEqual(groups[0]["skill"], "add-api-test")
 
+    def test_other_validator_success_does_not_make_failure_flaky(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            failed = root / "601" / "evals"
+            unrelated_pass = root / "601" / "eval-results"
+            failed.mkdir(parents=True)
+            unrelated_pass.mkdir(parents=True)
+            (failed / "results.json").write_text(json.dumps({
+                "status": "failed",
+                "failure_count": 1,
+                "failures": [{
+                    "case_id": "add-api-test-4",
+                    "file": "evals/cases/add-api-test.json",
+                    "rule": "skill_or_routing_invariant",
+                    "message": "negative case must forbid target skill",
+                }],
+            }), encoding="utf-8")
+            (unrelated_pass / "results.json").write_text(json.dumps({
+                "status": "passed",
+                "failure_count": 0,
+                "failures": [],
+            }), encoding="utf-8")
+            groups = analyze([{
+                "databaseId": 601,
+                "headSha": "same-sha",
+                "url": "https://example.test/runs/601",
+            }], root)
+
+        self.assertEqual(len(groups), 1)
+        self.assertEqual(groups[0]["source"], "case-dataset")
+        self.assertNotEqual(groups[0]["bucket"], "flaky (failed in some runs, passed in others)")
+        self.assertEqual(groups[0]["failed_run_count"], 1)
+        self.assertEqual(groups[0]["passed_run_count"], 0)
+
+    def test_distinct_validator_sources_do_not_share_failure_groups(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            case_results = root / "602" / "evals"
+            result_results = root / "602" / "eval-results"
+            case_results.mkdir(parents=True)
+            result_results.mkdir(parents=True)
+            failure = {
+                "case_id": "add-api-test-4",
+                "file": "evals/cases/add-api-test.json",
+                "rule": "schema_validation",
+                "message": "schema validation failed",
+            }
+            for path in (case_results / "results.json", result_results / "results.json"):
+                path.write_text(json.dumps({
+                    "status": "failed", "failure_count": 1, "failures": [failure],
+                }), encoding="utf-8")
+            groups = analyze([{
+                "databaseId": 602, "headSha": "same-sha",
+                "url": "https://example.test/runs/602",
+            }], root)
+
+        self.assertEqual(len(groups), 2)
+        self.assertEqual({group["source"] for group in groups}, {"case-dataset", "evaluation-results"})
+
     def test_playwright_failure_is_grouped_by_test_and_has_run_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

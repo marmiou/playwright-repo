@@ -313,9 +313,14 @@ jobs:
                                           title = " › ".join(
                                               part for part in [suite.get("title"), spec.get("title")] if part
                                           )
+                                          error = result.get("error")
+                                          message = (
+                                              error.get("message", result.get("status"))
+                                              if isinstance(error, dict)
+                                              else str(error or result.get("status"))
+                                          )
                                           failures.append(
-                                              f"- **Playwright · {title or spec.get('file', 'test')}**: "
-                                              f"{result.get('error', {}).get('message', result.get('status'))}"
+                                              f"- **Playwright · {title or spec.get('file', 'test')}**: {message}"
                                           )
                           visit(suite.get("suites", []))
                   visit(payload.get("suites", []))

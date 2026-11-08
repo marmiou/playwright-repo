@@ -618,6 +618,7 @@ def validate_results(root: Path, results_dir: Path) -> tuple[list[str], int]:
     if not directory.is_dir():
         return errors + [f"results path is not a directory: {directory}"], 0
     files = sorted(directory.rglob("*.json"))
+    record_count = 0
 
     for path in files:
         try:
@@ -628,6 +629,7 @@ def validate_results(root: Path, results_dir: Path) -> tuple[list[str], int]:
             continue
         if not resolved_path.is_file():
             continue
+        record_count += 1
         relative = resolved_path.relative_to(root).as_posix()
         try:
             record = load_json(resolved_path)
@@ -667,7 +669,7 @@ def validate_results(root: Path, results_dir: Path) -> tuple[list[str], int]:
         check_score(record, relative, errors)
         check_assessment_evidence(record, relative, errors)
         check_provenance(record, case, root, relative, errors)
-    return errors, len(files)
+    return errors, record_count
 
 
 def failure_details(errors: list[str]) -> list[dict[str, Any]]:

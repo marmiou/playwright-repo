@@ -277,6 +277,15 @@ jobs:
                   note = "Blocked by an earlier failure"
               lines.append(f"| {number} | {name} | {result_label(result)} | {note} |")
 
+          summary_result = (
+              "failure"
+              if any(result in {"failure", "cancelled"} for _, _, result, _ in statuses)
+              else "success"
+          )
+          lines.append(
+              f"| 6 | Pipeline summary | {result_label(summary_result)} | Aggregate required check |"
+          )
+
           lines.extend(["", "## Failures", ""])
           failures = []
           eval_path = Path("failure-data/evals/results.json")

@@ -1,6 +1,6 @@
 # QE Agent Skill Evaluations
 
-This directory contains the test design, case dataset and deterministic Tier 1 validation tooling for the repository's ten Claude Code QE skills. It is **not a model/skill execution runner**: Tier 1 validation checks case structure and repository consistency, makes no model calls and does not execute skills. The validator uses a pinned Python `jsonschema` dependency and runs in a dedicated GitHub Actions workflow. No MCP servers or provider integrations are configured.
+This directory contains the test design, case dataset and deterministic Tier 1 validation tooling for the repository's ten Claude Code QE skills. It is **not a model/skill execution runner**: Tier 1 validation checks case structure and repository consistency, makes no model calls and does not execute skills. The validator uses a pinned Python `jsonschema` dependency and runs in the unified `CI` workflow when evaluation cases, skill instructions or the CI workflow definition change. It emits GitHub error annotations and a machine-readable JSON result artifact. The scheduled `Daily Failure Analysis` workflow aggregates CI artifacts, reports recurring failures and opens or comments on one tracking issue; it is read-only with respect to skills and evaluation cases. No MCP servers or provider integrations are configured.
 
 ## Scope and inventory
 
@@ -50,7 +50,7 @@ python3 -m unittest discover -s evals/tests -v
 python3 evals/validate_cases.py
 ```
 
-The dedicated GitHub Actions workflow runs the same checks when evaluation cases or skill instructions change. Tier 1 checks:
+The unified `CI` workflow runs these checks when evaluation cases, skill instructions or its own workflow definition change. Tier 1 checks:
 - Validate every case file against `schemas/case.schema.json` using JSON Schema Draft 2020-12 and format checking.
 - Check exactly ten skill files and matching case files, with three positive, two negative and one behavioural case per skill.
 - Reject duplicate JSON object keys and globally duplicate case IDs.

@@ -207,7 +207,7 @@ def validate_repository(repo_root: Path) -> list[str]:
                     seen_case_ids[case_id] = relative_file
 
             case_type = case.get("type")
-            if case_type in type_counts:
+            if isinstance(case_type, str) and case_type in type_counts:
                 type_counts[case_type] += 1
 
             fixture = case.get("fixture")
@@ -238,14 +238,16 @@ def validate_repository(repo_root: Path) -> list[str]:
                 primary = routing.get("expected_primary_skill")
 
                 if isinstance(allowed, list) and isinstance(forbidden, list):
-                    overlap = sorted(set(allowed) & set(forbidden))
+                    allowed_ids = {item for item in allowed if isinstance(item, str)}
+                    forbidden_ids = {item for item in forbidden if isinstance(item, str)}
+                    overlap = sorted(allowed_ids & forbidden_ids)
                     if overlap:
                         errors.append(
                             f"{relative_file}: case {case_id!r} has skills in both "
                             f"allowed_companion_skills and forbidden_skills: {', '.join(overlap)}"
                         )
 
-                if skill_id not in forbidden:
+                if not isinstance(forbidden, list) or skill_id not in forbidden:
                     errors.append(
                         f"{relative_file}: negative case {case_id!r} must forbid its target skill {skill_id!r}"
                     )

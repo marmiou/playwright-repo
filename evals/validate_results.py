@@ -150,11 +150,15 @@ def verify_hash_at_revision(root: Path, revision: str, path: str, digest: str, f
     if not re.fullmatch(r"(?:[a-fA-F0-9]{40}|[a-fA-F0-9]{64})", revision or ""):
         add(errors, file, "provenance.repository_commit must be a 40- or 64-character commit hash")
         return
-    result = subprocess.run(
-        ["git", "-C", str(root), "show", f"{revision}:{path}"],
-        capture_output=True,
-        check=False,
-    )
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), "show", f"{revision}:{path}"],
+            capture_output=True,
+            check=False,
+        )
+    except OSError as exc:
+        add(errors, file, f"cannot execute git to verify {path}: {exc}")
+        return
     if result.returncode != 0:
         add(errors, file, f"cannot resolve {path} at provenance.repository_commit {revision}")
         return

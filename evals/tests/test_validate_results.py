@@ -438,6 +438,56 @@ class ValidateResultsTests(unittest.TestCase):
         self.write_record(record)
         self.assertTrue(any("canonical JSON serialization" in error for error in self.validate()))
 
+    def test_static_definitions_are_rejected_for_every_assessment_type(self) -> None:
+        mutations = {
+            "expectation": lambda record, reference: record["expectation_assessments"][0].update({"evidence": [reference]}),
+            "dimension": lambda record, reference: record["behavioural_dimensions"][0].update({"evidence": [reference]}),
+            "governance": lambda record, reference: record["governance_assessment"]["checks"][0].update({"evidence": [reference]}),
+            "adjudication": lambda record, reference: record["human_adjudication"].update({"evidence": [reference]}),
+        }
+        references = (
+            "repo:evals/cases/add-api-test.json",
+            "file:evals/rubrics/behavioural-quality.md",
+        )
+        for category, mutate in mutations.items():
+            for reference in references:
+                with self.subTest(category=category, reference=reference):
+                    record = copy.deepcopy(self.record)
+                    mutate(record, reference)
+                    self.write_record(record)
+                    errors = self.validate()
+                    self.assertTrue(
+                        any("assessment evidence must not reference case definitions or rubrics" in error for error in errors),
+                        errors,
+                    )
+
+    def test_trace_and_artifact_evidence_references_remain_accepted(self) -> None:
+        record = copy.deepcopy(self.record)
+        record["expectation_assessments"][0]["evidence"] = ["trace:captured-executor-output"]
+        record["behavioural_dimensions"][0]["evidence"] = ["artifact:generated-diff"]
+        record["governance_assessment"]["checks"][0]["evidence"] = ["trace:permission-check"]
+        record["human_adjudication"]["evidence"] = ["artifact:adjudication-record"]
+        self.write_record(record)
+        self.assertEqual(self.validate(), [])
+
+    def test_malformed_nested_expectation_outcomes_report_schema_errors_without_crashing(self) -> None:
+        for outcome in (["PASS"], {"value": "PASS"}):
+            with self.subTest(outcome=outcome):
+                record = copy.deepcopy(self.record)
+                record["expectation_assessments"][0]["outcome"] = outcome
+                self.write_record(record)
+                errors = self.validate()
+                self.assertTrue(any("schema validation" in error for error in errors), errors)
+
+    def test_malformed_nested_governance_outcomes_report_schema_errors_without_crashing(self) -> None:
+        for outcome in (["PASS"], {"value": "PASS"}):
+            with self.subTest(outcome=outcome):
+                record = copy.deepcopy(self.record)
+                record["governance_assessment"]["checks"][0]["outcome"] = outcome
+                self.write_record(record)
+                errors = self.validate()
+                self.assertTrue(any("schema validation" in error for error in errors), errors)
+
     def test_duplicate_json_object_keys_are_rejected(self) -> None:
         path = self.results / "duplicate.json"
         path.write_text('{"case_id":"one","case_id":"two"}', encoding="utf-8")

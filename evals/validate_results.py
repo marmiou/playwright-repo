@@ -13,7 +13,7 @@ from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 from jsonschema import Draft202012Validator, FormatChecker
 from jsonschema.exceptions import SchemaError
@@ -263,12 +263,37 @@ def check_reference(reference: str, root: Path, file: str, errors: list[str]) ->
     add(errors, file, f"unsupported evidence reference format: {value!r}")
 
 
+def is_case_or_rubric_definition_reference(reference: str, root: Path) -> bool:
+    """Identify static case/rubric definitions regardless of reference spelling."""
+    if not isinstance(reference, str):
+        return False
+    if reference.startswith(("https://", "http://")):
+        parts = Path(unquote(urlparse(reference).path)).parts
+    elif reference.startswith(("repo:", "file:")):
+        relative = reference.split(":", 1)[1].split("#", 1)[0]
+        candidate = (root / relative).resolve()
+        try:
+            parts = candidate.relative_to(root.resolve()).parts
+        except ValueError:
+            return False
+    else:
+        return False
+    return any(parts[index:index + 2] in (("evals", "cases"), ("evals", "rubrics")) for index in range(len(parts) - 1))
+
+
+def check_assessment_reference(reference: str, root: Path, file: str, errors: list[str]) -> None:
+    """Validate a reference and reject static definitions as proof of observed behaviour."""
+    check_reference(reference, root, file, errors)
+    if is_case_or_rubric_definition_reference(reference, root):
+        add(errors, file, f"assessment evidence must not reference case definitions or rubrics: {reference!r}")
+
+
 def check_assessment_evidence(record: dict[str, Any], file: str, errors: list[str]) -> None:
     """Require evidence for every affirmative or scored assessment."""
     expectations = record.get("expectation_assessments", [])
     if isinstance(expectations, list):
         for item in expectations:
-            if isinstance(item, dict) and item.get("outcome") in {"PASS", "PARTIAL", "FAIL"}:
+            if isinstance(item, dict) and isinstance(item.get("outcome"), str) and item.get("outcome") in {"PASS", "PARTIAL", "FAIL"}:
                 if not item.get("evidence"):
                     add(errors, file, f"expectation {item.get('index')} outcome {item.get('outcome')} requires at least one evidence reference")
 
@@ -286,7 +311,7 @@ def check_assessment_evidence(record: dict[str, Any], file: str, errors: list[st
         checks = governance.get("checks", [])
         if isinstance(checks, list):
             for item in checks:
-                if isinstance(item, dict) and item.get("applicability") == "APPLICABLE" and item.get("outcome") in {"PASS", "FAIL"}:
+                if isinstance(item, dict) and item.get("applicability") == "APPLICABLE" and isinstance(item.get("outcome"), str) and item.get("outcome") in {"PASS", "FAIL"}:
                     if not item.get("evidence"):
                         add(errors, file, f"governance check {item.get('check_id')} outcome {item.get('outcome')} requires at least one evidence reference")
 
@@ -445,7 +470,7 @@ def check_provenance(record: dict[str, Any], case: dict[str, Any], root: Path, f
             for item in collection:
                 if isinstance(item, dict):
                     for reference in item.get("evidence", []) if isinstance(item.get("evidence"), list) else []:
-                        check_reference(reference, root, file, errors)
+                        check_assessment_reference(reference, root, file, errors)
     governance = record.get("governance_assessment")
     if isinstance(governance, dict):
         override_items = governance.get("applicability_overrides", [])
@@ -453,7 +478,7 @@ def check_provenance(record: dict[str, Any], case: dict[str, Any], root: Path, f
             if isinstance(override, dict):
                 evidence = override.get("evidence", [])
                 for reference in evidence if isinstance(evidence, list) else []:
-                    check_reference(reference, root, file, errors)
+                    check_assessment_reference(reference, root, file, errors)
 
 
 def check_governance(record: dict[str, Any], case_id: str, defaults: dict[str, set[str]], file: str, errors: list[str]) -> None:
@@ -507,8 +532,6 @@ def check_governance(record: dict[str, Any], case_id: str, defaults: dict[str, s
         for reference in item.get("evidence", []) if isinstance(item.get("evidence"), list) else []:
             if isinstance(reference, str) and not reference.startswith(("repo:", "file:", "https://", "http://", "trace:", "artifact:", "run:", "response:")):
                 add(errors, file, f"override evidence for {key} must be an explicit repository, URL, trace, artifact or response reference")
-            if isinstance(reference, str) and reference.startswith(("repo:evals/cases/", "repo:evals/rubrics/", "file:evals/cases/", "file:evals/rubrics/")):
-                add(errors, file, f"override evidence for {key} must reference case-specific observed evidence, not a case definition or rubric")
 
     for key in required:
         check = check_map.get(key)

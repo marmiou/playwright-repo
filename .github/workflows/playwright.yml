@@ -24,6 +24,11 @@ jobs:
     outputs:
       evals: ${{ steps.filter.outputs.evals }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
       - name: Detect evaluation changes
         uses: dorny/paths-filter@v3
         id: filter

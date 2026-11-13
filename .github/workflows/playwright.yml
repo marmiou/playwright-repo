@@ -25,12 +25,12 @@ jobs:
       evals: ${{ steps.filter.outputs.evals }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0
 
       - name: Detect evaluation changes
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3.0.3
         id: filter
         with:
           filters: |
@@ -38,6 +38,22 @@ jobs:
               - 'evals/**'
               - '.claude/skills/**'
               - '.github/workflows/playwright.yml'
+
+  ci-policy:
+    name: 0a · CI Policy — Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Setup Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+
+      - name: Test CI status policy
+        run: python -m unittest discover -s scripts/tests -p 'test_ci_status.py' -v
 
   evals-unit:
     name: 1 · AI QE Framework — Validator Unit Tests
@@ -47,10 +63,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
           cache: pip
@@ -70,10 +86,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
           cache: pip
@@ -87,7 +103,7 @@ jobs:
 
       - name: Upload validator results
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: eval-validation-results
           path: eval-validation-results/results.json
@@ -102,12 +118,12 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
           cache: pip
@@ -121,7 +137,7 @@ jobs:
 
       - name: Upload result validation
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: eval-results-validation
           path: eval-results-validation/results.json
@@ -134,7 +150,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       - name: Setup Node.js and Yarn
         uses: ./.github/actions/setup
@@ -152,7 +168,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       - name: Setup Node.js and Yarn
         uses: ./.github/actions/setup
@@ -165,13 +181,21 @@ jobs:
 
   tests:
     name: 6 · Application — Playwright Tests
-    needs: [changes, lint, typecheck, evals-unit, evals-dataset, evals-results]
-    if: always() && needs.changes.result == 'success' && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    needs: [changes, ci-policy, lint, typecheck, evals-unit, evals-dataset, evals-results]
+    if: >-
+      always() &&
+      needs.changes.result == 'success' &&
+      needs.ci-policy.result == 'success' &&
+      needs.lint.result == 'success' &&
+      needs.typecheck.result == 'success' &&
+      (needs.evals-unit.result == 'success' || (needs.evals-unit.result == 'skipped' && needs.changes.outputs.evals != 'true')) &&
+      (needs.evals-dataset.result == 'success' || (needs.evals-dataset.result == 'skipped' && needs.changes.outputs.evals != 'true')) &&
+      (needs.evals-results.result == 'success' || (needs.evals-results.result == 'skipped' && needs.changes.outputs.evals != 'true'))
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       - name: Setup Node.js and Yarn
         uses: ./.github/actions/setup
@@ -184,7 +208,7 @@ jobs:
 
       - name: Install Allure CLI
         id: install_allure
-        run: npm install --global allure-commandline
+        run: npm install --global allure-commandline@2.46.1
 
       - name: Run Playwright tests
         id: playwright
@@ -199,7 +223,7 @@ jobs:
 
       - name: Upload Playwright JSON results
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: playwright-json-results
           path: test-results/results.json
@@ -208,7 +232,7 @@ jobs:
 
       - name: Upload Playwright HTML report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: playwright-report
           path: playwright-report/
@@ -217,7 +241,7 @@ jobs:
 
       - name: Upload Allure report
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: allure-report
           path: allure-report/
@@ -234,33 +258,36 @@ jobs:
       contents: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
 
       - name: Download Allure report
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: allure-report
           path: allure-report
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: allure-report
 
   summary:
     name: 8 · CI Summary
-    needs: [changes, lint, typecheck, evals-unit, evals-dataset, evals-results, tests, deploy]
+    needs: [changes, ci-policy, lint, typecheck, evals-unit, evals-dataset, evals-results, tests, deploy]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
       - name: Download validator results
         if: always()
         continue-on-error: true
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: eval-validation-results
           path: failure-data/evals
@@ -268,7 +295,7 @@ jobs:
       - name: Download evaluation result validation
         if: always()
         continue-on-error: true
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: eval-results-validation
           path: failure-data/eval-results
@@ -276,7 +303,7 @@ jobs:
       - name: Download Playwright JSON results
         if: always()
         continue-on-error: true
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: playwright-json-results
           path: failure-data/playwright
@@ -284,6 +311,7 @@ jobs:
       - name: Write pipeline summary
         env:
           CHANGES_RESULT: ${{ needs.changes.result }}
+          CI_POLICY_RESULT: ${{ needs.ci-policy.result }}
           EVALS_CHANGED: ${{ needs.changes.outputs.evals }}
           LINT_RESULT: ${{ needs.lint.result }}
           TYPECHECK_RESULT: ${{ needs.typecheck.result }}
@@ -300,6 +328,7 @@ jobs:
 
           statuses = [
               ("0", "Detect AI QE Framework Changes", os.environ["CHANGES_RESULT"], ""),
+              ("0a", "CI Policy — Unit Tests", os.environ["CI_POLICY_RESULT"], ""),
               ("1", "AI QE Framework — Validator Unit Tests", os.environ["UNIT_RESULT"], ""),
               ("2", "AI QE Framework — Validate Evaluation Cases", os.environ["DATASET_RESULT"], ""),
               ("3", "AI QE Framework — Validate Evaluation Results", os.environ["RESULTS_RESULT"], ""),
@@ -333,7 +362,10 @@ jobs:
               notes["2"] = "No eval files changed"
               notes["3"] = "No eval files changed"
           if os.environ["TESTS_RESULT"] == "skipped":
-              notes["6"] = "Blocked by an earlier failure"
+              notes["6"] = "Unexpected skip: application tests are required"
+          for number, result in (("1", os.environ["UNIT_RESULT"]), ("2", os.environ["DATASET_RESULT"]), ("3", os.environ["RESULTS_RESULT"])):
+              if result == "skipped" and os.environ["EVALS_CHANGED"] == "true":
+                  notes[number] = "Unexpected skip: evaluation files changed"
           if os.environ.get("GITHUB_REF") != "refs/heads/main" or os.environ.get("GITHUB_EVENT_NAME") != "push":
               notes["7"] = "Runs on main only"
           elif os.environ["TESTS_RESULT"] != "success":
@@ -351,11 +383,27 @@ jobs:
                   note = "Blocked by an earlier failure"
               lines.append(f"| {number} | {name} | {result_label(result)} | {note} |")
 
-          summary_result = (
-              "failure"
-              if any(result in {"failure", "cancelled"} for _, _, result, _ in statuses)
-              else "success"
+          import sys
+          sys.path.insert(0, "scripts")
+          from ci_status import status_is_acceptable
+
+          evals_changed = os.environ["EVALS_CHANGED"] == "true"
+          is_main_push = (
+              os.environ.get("GITHUB_REF") == "refs/heads/main"
+              and os.environ.get("GITHUB_EVENT_NAME") == "push"
           )
+          invalid_statuses = [
+              (number, name, result)
+              for number, name, result, _ in statuses
+              if not status_is_acceptable(
+                  number,
+                  result,
+                  evals_changed=evals_changed,
+                  is_main_push=is_main_push,
+                  tests_result=os.environ["TESTS_RESULT"],
+              )
+          ]
+          summary_result = "failure" if invalid_statuses else "success"
           lines.append(
               f"| 8 | CI summary | {result_label(summary_result)} | Aggregate required check |"
           )
@@ -431,6 +479,8 @@ jobs:
           Path(os.environ["GITHUB_STEP_SUMMARY"]).write_text(summary, encoding="utf-8")
           print(summary)
 
-          if any(result in {"failure", "cancelled"} for _, _, result, _ in statuses):
+          if invalid_statuses:
+              for number, name, result in invalid_statuses:
+                  print(f"Unexpected CI status for step {number} ({name}): {result}", file=sys.stderr)
               raise SystemExit(1)
           PY

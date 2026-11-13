@@ -1,0 +1,429 @@
+#!/usr/bin/env python3
+"""Aggregate CI failure artifacts into a human-reviewed daily analysis report."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+from collections import Counter, defaultdict
+from pathlib import Path
+from typing import Any
+
+
+BUCKETS = (
+    "skill instructions unclear or missing",
+    "eval case ambiguous or wrong expectation",
+    "routing error (wrong skill chosen)",
+    "flaky (failed in some runs, passed in others)",
+    "environment/infra",
+    "unknown",
+)
+MAX_GROUPS = 30
+MAX_EVIDENCE_LINKS = 5
+MAX_MESSAGE_LENGTH = 500
+
+
+def _read_json(path: Path) -> Any | None:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def _run_url(run: dict[str, Any]) -> str:
+    return str(run.get("url") or "")
+
+
+def _safe_markdown(value: Any, limit: int = MAX_MESSAGE_LENGTH) -> str:
+    """Escape untrusted artifact text before placing it in an issue/report."""
+    text = str(value or "").replace("\\", "\\\\").replace("\r", " ").replace("\n", " ")
+    for character in ("`", "*", "_", "[", "]", "(", ")", "|"):
+        text = text.replace(character, "\\" + character)
+    return text.replace("<", "&lt;").replace(">", "&gt;").replace("@", "@\u200b")[:limit]
+
+
+def _skill_from_failure(failure: dict[str, Any]) -> str | None:
+    file_name = str(failure.get("file") or "")
+    match = re.search(r"evals/cases/([^/]+)\.json$", file_name)
+    if not match:
+        match = re.search(r"\.claude/skills/([^/]+)/SKILL\.md$", file_name)
+    if match:
+        return match.group(1)
+    case_id = str(failure.get("case_id") or "")
+    for suffix in ("-positive-", "-negative-", "-behavioral-"):
+        if suffix in case_id:
+            return case_id.split(suffix, 1)[0]
+    return None
+
+
+def _group_key(kind: str, failure: dict[str, Any], source: str | None = None) -> str:
+    if kind == "validator":
+        identity = failure.get("case_id") or failure.get("file") or "dataset"
+        return f"validator:{source or 'unknown'}:{failure.get('rule', 'unknown')}:{identity}"
+    return f"playwright:{failure.get('test_key', 'unknown-test')}"
+
+
+def _classification(text: str, mixed_outcomes: bool) -> tuple[str, str]:
+    value = text.lower()
+    if mixed_outcomes:
+        return BUCKETS[3], "Heuristic guess: the same failure key passed and failed on the same commit."
+    if any(term in value for term in (
+        "connection refused", "econnreset", "enotfound", "dns", "browser closed",
+        "browser executable", "no space left", "out of memory", "worker process",
+        "network error", "service unavailable", "timed out waiting for the browser",
+        "unable to launch", "infrastructure", "runner",
+    )):
+        return BUCKETS[4], "Heuristic guess based on infrastructure or execution symptoms."
+    if any(term in value for term in (
+        "expected_primary_skill", "forbidden_skills", "allowed_companion_skills",
+        "wrong skill", "routing", "route to", "skill selection",
+    )):
+        return BUCKETS[2], "Heuristic guess based on routing-related evidence."
+    if any(term in value for term in (
+        "skill.md", "skill instructions", "instruction is missing",
+        "instructions are unclear", "description is missing", "skill description",
+    )):
+        return BUCKETS[0], "Heuristic guess based on skill-instruction references."
+    if any(term in value for term in (
+        "expectation", "expected result", "ambiguous", "wrong expectation",
+        "assertion", "schema validation", "case composition", "fixture",
+    )):
+        return BUCKETS[1], "Heuristic guess based on evaluation-case or assertion evidence."
+    return BUCKETS[5], "Heuristic guess; available evidence does not support a more specific bucket."
+
+
+def _suggested_action(bucket: str) -> str:
+    return {
+        BUCKETS[0]: "Review the owning SKILL.md for missing decision rules, examples and explicit boundaries; propose a focused change for human review.",
+        BUCKETS[1]: "Review the case prompt, fixture and expected evidence; clarify the oracle before changing the skill.",
+        BUCKETS[2]: "Inspect the skill descriptions and competing routes; add a discriminating positive/negative regression case after human confirmation.",
+        BUCKETS[3]: "Re-run the same commit and inspect traces, retries and shared state before changing expectations.",
+        BUCKETS[4]: "Check runner health, browser installation, dependencies, network and external service availability.",
+        BUCKETS[5]: "Inspect the linked run, test output and relevant source; gather more evidence before assigning ownership.",
+    }[bucket]
+
+
+def _record(
+    groups: dict[str, dict[str, Any]],
+    key: str,
+    *,
+    kind: str,
+    run: dict[str, Any],
+    failure: dict[str, Any],
+    outcome: str,
+    source: str | None = None,
+) -> None:
+    group = groups.setdefault(key, {
+        "key": key,
+        "kind": kind,
+        "source": source,
+        "rule_or_test": failure.get("rule") or failure.get("test_key") or key,
+        "skill": _skill_from_failure(failure),
+        "message": str(failure.get("message") or failure.get("error") or "")[:MAX_MESSAGE_LENGTH],
+        "observations": [],
+        "runs": {},
+        "evidence": [],
+    })
+    sha = str(run.get("headSha") or run.get("head_sha") or f"run:{run.get('databaseId') or run.get('id') or 'unknown'}")
+    group["observations"].append({"sha": sha, "outcome": outcome})
+    outcomes = ["failed", "passed"] if outcome == "flaky" else [outcome]
+    group["runs"].setdefault(sha, []).extend(outcomes)
+    url = _run_url(run)
+    if url and url not in group["evidence"]:
+        group["evidence"].append(url)
+
+
+def _parse_validator(
+    path: Path, run: dict[str, Any], groups: dict[str, dict[str, Any]], source: str
+) -> bool:
+    payload = _read_json(path)
+    if not isinstance(payload, dict):
+        return False
+    failures = payload.get("failures", [])
+    if not isinstance(failures, list):
+        return False
+    if not failures and payload.get("status") == "passed":
+        # A successful result is compared only with failures from this validator.
+        return True
+    for item in failures:
+        if not isinstance(item, dict):
+            continue
+        _record(
+            groups,
+            _group_key("validator", item, source),
+            kind="validator",
+            run=run,
+            failure=item,
+            outcome="failed",
+            source=source,
+        )
+    return False
+
+
+def _playwright_tests(payload: Any) -> list[dict[str, Any]]:
+    found: list[dict[str, Any]] = []
+
+    def visit(suites: list[Any], parents: list[str]) -> None:
+        for suite in suites:
+            if not isinstance(suite, dict):
+                continue
+            title = str(suite.get("title") or "")
+            path = str(suite.get("file") or "")
+            next_parents = parents + ([title] if title else [])
+            for spec in suite.get("specs", []):
+                if not isinstance(spec, dict):
+                    continue
+                spec_title = str(spec.get("title") or "")
+                for test in spec.get("tests", []):
+                    if not isinstance(test, dict):
+                        continue
+                    results = test.get("results", [])
+                    states = [
+                        str(result.get("status") or "")
+                        for result in results
+                        if isinstance(result, dict)
+                    ]
+                    if not states:
+                        continue
+                    final = states[-1]
+                    outcome = "passed" if final == "passed" else (
+                        "failed" if final in {"failed", "timedOut", "interrupted"} else "other"
+                    )
+                    retry_flake = "failed" in states[:-1] and final == "passed"
+                    name = " › ".join(part for part in next_parents + [spec_title] if part)
+                    test_key = f"{spec.get('file') or path}::{name or spec_title}"
+                    error_messages = []
+                    for result in results:
+                        if isinstance(result, dict) and result.get("error"):
+                            error = result["error"]
+                            if isinstance(error, dict):
+                                error_messages.append(str(error.get("message") or ""))
+                            else:
+                                error_messages.append(str(error))
+                    found.append({
+                        "test_key": test_key,
+                        "message": " | ".join(error_messages)[:MAX_MESSAGE_LENGTH],
+                        "outcome": "flaky" if retry_flake else outcome,
+                    })
+            visit(suite.get("suites", []), next_parents)
+
+    if isinstance(payload, dict):
+        visit(payload.get("suites", []), [])
+    return found
+
+
+def _parse_playwright(
+    path: Path, run: dict[str, Any], groups: dict[str, dict[str, Any]]
+) -> None:
+    payload = _read_json(path)
+    if payload is None:
+        return
+    for test in _playwright_tests(payload):
+        if test["outcome"] == "other":
+            continue
+        failure = {
+            "test_key": test["test_key"],
+            "message": test["message"] or test["outcome"],
+        }
+        _record(
+            groups,
+            _group_key("playwright", failure),
+            kind="playwright",
+            run=run,
+            failure=failure,
+            outcome=test["outcome"],
+        )
+
+
+def _parse_future_behavioural(
+    path: Path, run: dict[str, Any], groups: dict[str, dict[str, Any]]
+) -> None:
+    """Best-effort extension point for future behavioural evaluation result JSON."""
+    payload = _read_json(path)
+    if payload is None:
+        return
+    records = payload if isinstance(payload, list) else payload.get("results", [])
+    if not isinstance(records, list):
+        return
+    for item in records:
+        if not isinstance(item, dict):
+            continue
+        verdict = str(item.get("verdict") or item.get("status") or "").upper()
+        if verdict not in {"FAIL", "FAILED"}:
+            continue
+        failure = {
+            "case_id": item.get("case_id"),
+            "file": item.get("file"),
+            "rule": item.get("rule") or "behavioural_evaluation",
+            "message": item.get("message") or item.get("rationale") or "Behavioural evaluation failed.",
+        }
+        _record(
+            groups,
+            _group_key("validator", failure, "behavioural"),
+            kind="behavioural",
+            run=run,
+            failure=failure,
+            outcome="failed",
+            source="behavioural",
+        )
+
+
+def analyze(runs: list[dict[str, Any]], artifacts_dir: Path) -> list[dict[str, Any]]:
+    groups: dict[str, dict[str, Any]] = {}
+    successful_validator_runs: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for run in runs:
+        run_id = str(run.get("databaseId") or run.get("id") or "")
+        if not run_id:
+            continue
+        root = artifacts_dir / run_id
+        validators = [
+            ("case-dataset", root / "evals" / "results.json"),
+            ("evaluation-results", root / "eval-results" / "results.json"),
+        ]
+        playwright = root / "playwright" / "results.json"
+        behavioural_files = list(root.glob("behavioural/**/*.json"))
+
+        failed_observations_before = sum(
+            observation["outcome"] in {"failed", "flaky"}
+            for group in groups.values()
+            for observation in group["observations"]
+        )
+        for source, validator in validators:
+            if validator.is_file() and _parse_validator(validator, run, groups, source):
+                successful_validator_runs[source].append(run)
+        if playwright.is_file():
+            _parse_playwright(playwright, run, groups)
+        for file in behavioural_files:
+            _parse_future_behavioural(file, run, groups)
+
+        failed_observations_after = sum(
+            observation["outcome"] in {"failed", "flaky"}
+            for group in groups.values()
+            for observation in group["observations"]
+        )
+        if (
+            str(run.get("conclusion") or "").lower() == "failure"
+            and failed_observations_after == failed_observations_before
+        ):
+            failure = {
+                "test_key": "pipeline:failure-without-diagnostic-artifacts",
+                "message": "The CI run failed but no failing validator or Playwright result artifact was available. Inspect the job logs to identify the failing stage.",
+            }
+            _record(
+                groups,
+                "pipeline:failure-without-diagnostic-artifacts",
+                kind="pipeline",
+                run=run,
+                failure=failure,
+                outcome="failed",
+            )
+
+    for group in groups.values():
+        if group["kind"] == "validator":
+            for successful_run in successful_validator_runs.get(group.get("source"), []):
+                sha = str(successful_run.get("headSha") or successful_run.get("head_sha") or f"run:{successful_run.get('databaseId') or successful_run.get('id') or 'unknown'}")
+                if sha in group["runs"]:
+                    group["runs"][sha].append("passed")
+
+    results = []
+    for group in groups.values():
+        outcomes = [outcome for run_outcomes in group["runs"].values() for outcome in run_outcomes]
+        if "failed" not in outcomes:
+            continue
+        failed_runs = sum(outcome == "failed" for outcome in outcomes)
+        passed_runs = sum(outcome == "passed" for outcome in outcomes)
+        mixed = any("failed" in values and "passed" in values for values in group["runs"].values())
+        text_for_classification = " ".join(
+            [group["key"], group["message"], str(group["skill"] or "")]
+        )
+        bucket, confidence = _classification(text_for_classification, mixed)
+        group["bucket"] = bucket
+        group["classification_note"] = confidence
+        group["failed_run_count"] = failed_runs
+        group["passed_run_count"] = passed_runs
+        group["recurrence_count"] = failed_runs
+        group["suggested_next_action"] = _suggested_action(bucket)
+        group["evidence"] = group["evidence"][:MAX_EVIDENCE_LINKS]
+        results.append(group)
+
+    return sorted(
+        results,
+        key=lambda item: (-item["recurrence_count"], item["key"]),
+    )[:MAX_GROUPS]
+
+
+def render_report(groups: list[dict[str, Any]], days: int) -> str:
+    if not groups:
+        return (
+            f"# Daily failure analysis\n\n"
+            f"No CI failure artifacts were found in the last {days} day(s). "
+            "No issue should be created or updated.\n"
+        )
+
+    counts = Counter(group["bucket"] for group in groups)
+    lines = [
+        "# Daily failure analysis",
+        "",
+        f"Window: last **{days} day(s)**. Groups are based on available CI artifacts.",
+        "",
+        "> Classification is deterministic and heuristic. It is not a confirmed root cause. "
+        "Recurrence counts are evidence from the linked runs; suggested actions require human review.",
+        "",
+        "## Bucket counts",
+        "",
+        "| Bucket | Groups |",
+        "|---|---:|",
+    ]
+    for bucket in BUCKETS:
+        lines.append(f"| {bucket} | {counts.get(bucket, 0)} |")
+
+    lines.extend(["", "## Top recurring failures", ""])
+    for index, group in enumerate(groups[:MAX_GROUPS], start=1):
+        lines.extend([
+            f"### {index}. {_safe_markdown(group['key'])}",
+            "",
+            f"- **Type:** {group['kind']}",
+            f"- **Skill:** {_safe_markdown(group.get('skill') or 'Not identified')}",
+            f"- **Failed runs:** {group['failed_run_count']}",
+            f"- **Passed runs for same commit:** {group['passed_run_count']}",
+            f"- **Classification:** {group['bucket']}",
+            f"- **Confidence:** {_safe_markdown(group['classification_note'])}",
+            f"- **Evidence:** {_safe_markdown(group['message'] or 'No error message captured.')}",
+            f"- **Suggested next action:** {_safe_markdown(group['suggested_next_action'])}",
+        ])
+        if group["evidence"]:
+            lines.append("- **Run links:** " + ", ".join(group["evidence"]))
+        else:
+            lines.append("- **Run links:** No run URL was available.")
+        lines.append("")
+
+    report = "\n".join(lines)
+    return report[:60_000] + ("\n\n_Report truncated to 60,000 characters._\n" if len(report) > 60_000 else "\n")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--runs-file", type=Path, required=True)
+    parser.add_argument("--artifacts-dir", type=Path, required=True)
+    parser.add_argument("--days", type=int, default=1)
+    parser.add_argument("--output", type=Path, default=Path("failure-analysis.md"))
+    args = parser.parse_args()
+
+    runs = _read_json(args.runs_file)
+    if not isinstance(runs, list):
+        raise SystemExit("Runs input must be a JSON array.")
+    groups = analyze(runs, args.artifacts_dir)
+    report = render_report(groups, max(1, args.days))
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(report, encoding="utf-8")
+    summary = Path(__import__("os").environ.get("GITHUB_STEP_SUMMARY", ""))
+    if str(summary) not in {"", "."}:
+        with summary.open("a", encoding="utf-8") as stream:
+            stream.write(report)
+    print(f"Analyzed {len(runs)} CI run(s); found {len(groups)} failure group(s).")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

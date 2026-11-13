@@ -1,0 +1,122 @@
+name: Daily Failure Analysis
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      days:
+        description: Number of days to analyse
+        required: false
+        default: "1"
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+jobs:
+  analyze:
+    if: github.repository == 'marmiou/playwright-repo' && github.event.repository.fork != true
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Collect recent CI runs and artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DAYS: ${{ inputs.days || '1' }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$DAYS" =~ ^[0-9]+$ ]] || [ "$DAYS" -lt 1 ] || [ "$DAYS" -gt 30 ]; then
+            echo "days must be an integer between 1 and 30" >&2
+            exit 1
+          fi
+
+          since="$(date -u -d "$DAYS days ago" +%Y-%m-%d)"
+          mkdir -p failure-analysis/runs failure-analysis/artifacts
+
+          gh run list --workflow 'Application & AI QE Framework CI' --status failure --created ">=$since" --limit 100 \
+            --json databaseId,url,createdAt,headSha,conclusion > failure-analysis/runs/failed.json
+          gh run list --workflow 'Application & AI QE Framework CI' --status success --created ">=$since" --limit 100 \
+            --json databaseId,url,createdAt,headSha,conclusion > failure-analysis/runs/successful.json
+
+          python - <<'PY'
+          import json
+          from datetime import datetime, timedelta, timezone
+          from pathlib import Path
+
+          cutoff = datetime.now(timezone.utc) - timedelta(days=int(__import__("os").environ["DAYS"]))
+          runs = []
+          seen = set()
+          for name in ("failed.json", "successful.json"):
+              items = json.loads((Path("failure-analysis/runs") / name).read_text())
+              for item in items:
+                  created = datetime.fromisoformat(item["createdAt"].replace("Z", "+00:00"))
+                  if created < cutoff or item["databaseId"] in seen:
+                      continue
+                  seen.add(item["databaseId"])
+                  runs.append(item)
+          runs.sort(key=lambda item: item.get("createdAt", ""))
+          Path("failure-analysis/runs/all.json").write_text(json.dumps(runs, indent=2))
+          print(f"Found {len(runs)} completed CI run(s) in the last {int(__import__('os').environ['DAYS'])} day(s).")
+          PY
+
+          while IFS= read -r run_id; do
+            [ -n "$run_id" ] || continue
+            mkdir -p "failure-analysis/artifacts/$run_id/evals" "failure-analysis/artifacts/$run_id/eval-results" "failure-analysis/artifacts/$run_id/playwright"
+            gh run download "$run_id" --name eval-validation-results \
+              --dir "failure-analysis/artifacts/$run_id/evals" >/dev/null 2>&1 || true
+            gh run download "$run_id" --name eval-results-validation \
+              --dir "failure-analysis/artifacts/$run_id/eval-results" >/dev/null 2>&1 || true
+            gh run download "$run_id" --name playwright-json-results \
+              --dir "failure-analysis/artifacts/$run_id/playwright" >/dev/null 2>&1 || true
+          done < <(python -c 'import json; print("\n".join(str(x["databaseId"]) for x in json.load(open("failure-analysis/runs/all.json"))))')
+
+      - name: Analyse failures
+        run: |
+          python evals/analyze_failures.py \
+            --runs-file failure-analysis/runs/all.json \
+            --artifacts-dir failure-analysis/artifacts \
+            --days "${{ inputs.days || '1' }}" \
+            --output failure-analysis/report.md
+
+      - name: Upload failure analysis report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: daily-failure-analysis
+          path: failure-analysis/report.md
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Create or update the daily analysis issue
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! grep -qE '^###? [0-9]+\.' failure-analysis/report.md; then
+            echo "No failure groups found; leaving the issue unchanged."
+            exit 0
+          fi
+
+          issue_number="$(gh issue list --state open --search 'in:title "Daily failure analysis"' \
+            --json number,title --limit 50 \
+            --jq '.[] | select(.title == "Daily failure analysis") | .number' | head -n 1)"
+
+          if [ -n "$issue_number" ]; then
+            gh issue comment "$issue_number" --body-file failure-analysis/report.md
+          else
+            gh issue create --title "Daily failure analysis" --body-file failure-analysis/report.md
+          fi

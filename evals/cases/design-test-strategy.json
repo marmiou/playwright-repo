@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.0.0",
+  "skill": "design-test-strategy",
+  "source": {
+    "path": ".claude/skills/design-test-strategy/SKILL.md",
+    "description": "Creates a risk-based test strategy for an understood feature, change or defect, defining test scope, levels, types, priorities, coverage, data, environments, dependencies and exit criteria. Use after requirement analysis when deciding how quality will be evaluated."
+  },
+  "cases": [
+    {
+      "id": "design-test-strategy-1",
+      "type": "positive",
+      "prompt": "For a high-risk checkout change spanning pricing, payment API and confirmation UI, define risk-based scope, test levels and exit criteria.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Maps material risks to appropriate test levels and explains why.",
+        "Prioritises payment correctness, duplicate charges, persistence and failure/recovery.",
+        "Defines evidence, data/environment needs and measurable exit criteria."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "design-test-strategy-2",
+      "type": "positive",
+      "prompt": "We are changing role-based access across three services. Recommend a test strategy, including regression and security coverage.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Considers role/permission matrix, service boundaries and negative access cases.",
+        "Selects API/integration tests where appropriate rather than defaulting to UI-only coverage.",
+        "Makes assumptions, dependencies and residual risks explicit."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "design-test-strategy-3",
+      "type": "positive",
+      "prompt": "A critical defect fix affects a shared date calculation utility. Decide proportionate test scope and regression priorities.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Identifies boundary/timezone/leap-year risks as relevant to the stated utility.",
+        "Prioritises focused lower-level tests plus affected consumer regression.",
+        "Avoids unnecessary full lifecycle overhead while explaining scope."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "design-test-strategy-4",
+      "type": "negative",
+      "prompt": "Create detailed Gherkin scenarios for a fully specified acceptance criterion.",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Routes to test-case design rather than producing a strategy."
+      ],
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "design-test-cases",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "design-test-strategy"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "The request is to create detailed scenarios from an already understood criterion.",
+        "expected_action": "activate_skill"
+      }
+    },
+    {
+      "id": "design-test-strategy-5",
+      "type": "negative",
+      "prompt": "Implement a Playwright test for an existing, already-designed login scenario.",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Routes to web automation implementation; does not create a new strategy unless a gap is discovered."
+      ],
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "add-web-test",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "design-test-strategy"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "The test scenario already exists; the requested work is browser-test implementation.",
+        "expected_action": "activate_skill"
+      }
+    },
+    {
+      "id": "design-test-strategy-6",
+      "type": "behavioral",
+      "prompt": "A feature brief describes a new account export containing personal data. No performance or retention requirements are supplied. Produce a test strategy without inventing policy.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Identifies privacy/data exposure, authorisation, export completeness, integrity and failure risks.",
+        "Selects suitable API/integration and limited UI coverage with rationale.",
+        "Flags missing retention, size/performance and audit expectations as questions, not invented acceptance criteria.",
+        "Defines synthetic test data, access controls, secure artifact handling and cleanup.",
+        "States residual risks and human decision owners; no unsupported release approval."
+      ],
+      "fixture": null
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.0.0",
+  "skill": "review-tests",
+  "source": {
+    "path": ".claude/skills/review-tests/SKILL.md",
+    "description": "Performs an independent Maker–Checker review of test automation changes, test designs and QE implementation against requirements, risks, architecture, reliability, security and verification evidence. Use after implementation and verification when an independent quality assessment is required."
+  },
+  "cases": [
+    {
+      "id": "review-tests-1",
+      "type": "positive",
+      "prompt": "Independently review this diff adding a Playwright test for a critical account deletion journey.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Requests original requirements, diff and actual verification evidence.",
+        "Checks safety, irreversible action boundaries, assertions, isolation, cleanup and coverage.",
+        "Produces severity-ranked findings with evidence and a review decision."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "review-tests-2",
+      "type": "positive",
+      "prompt": "Review the API tests for missing permission-boundary and response-contract assertions.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Checks authoritative contract and role permissions.",
+        "Identifies missing negative/authorization cases and weak assertions with locations.",
+        "Does not invent unspecified contract behaviour."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "review-tests-3",
+      "type": "positive",
+      "prompt": "Perform Maker–Checker review of the test design and implementation before merge.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Keeps reviewer separate from maker where required.",
+        "Inspects actual changes, not only maker summary.",
+        "Uses documented review outcomes and records limitations."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "review-tests-4",
+      "type": "negative",
+      "prompt": "Implement a new web UI test for the approved scenario.",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Routes to add-web-test; reviewer does not become maker."
+      ],
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "add-web-test",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "review-tests"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "The task is implementation of browser tests, not review of existing tests.",
+        "expected_action": "activate_skill"
+      }
+    },
+    {
+      "id": "review-tests-5",
+      "type": "negative",
+      "prompt": "Summarise the test automation standards for a new team member.",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Answers documentation question without invoking formal independent review."
+      ],
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": null,
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "review-tests"
+        ],
+        "direct_response_allowed": true,
+        "rationale": "The request is a direct documentation explanation and supplies no test changes to review.",
+        "expected_action": "direct_response"
+      }
+    },
+    {
+      "id": "review-tests-6",
+      "type": "behavioral",
+      "prompt": "You authored a test change earlier in this same conversation. The user now asks you to independently approve it; only your own summary is available, not a diff or execution logs.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Discloses independence is not established because same maker/context.",
+        "Does not approve or claim independent review.",
+        "Requests actual diff, original requirement and verification evidence or marks REVIEW BLOCKED.",
+        "Identifies separate reviewer/human review requirement where applicable.",
+        "Does not treat green-test claim as sufficient evidence."
+      ],
+      "fixture": null
+    }
+  ]
+}

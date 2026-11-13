@@ -6,7 +6,7 @@ This workflow defines how changes are independently reviewed using the Maker–C
 
 It applies to test automation changes, framework updates, shared QE assets and other changes requiring independent verification.
 
-The governance principles are defined in `../governance/maker-checker-and-independent-review.md`.
+The governance principles are defined in `../governance/maker-checker.md`.
 
 ## 2. Workflow
 
@@ -168,7 +168,7 @@ AI governance requirements are defined in `../ai/ai-agent-governance.md`.
 
 ## 7. Related Guidance
 
-- `../governance/maker-checker-and-independent-review.md`
+- `../governance/maker-checker.md`
 - `../governance/requirements-integrity-and-product-ownership.md`
 - `../governance/quality-gates-and-readiness.md`
 - `../engineering-practices/test-reliability.md`

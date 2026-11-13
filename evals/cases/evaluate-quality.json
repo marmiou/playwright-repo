@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.0.0",
+  "skill": "evaluate-quality",
+  "source": {
+    "path": ".claude/skills/evaluate-quality/SKILL.md",
+    "description": "Evaluates the quality outcome of a feature, change or release candidate using requirement coverage, risk treatment, execution evidence, independent review and residual risk. Use at QE closure or when communicating quality readiness to stakeholders."
+  },
+  "cases": [
+    {
+      "id": "evaluate-quality-1",
+      "type": "positive",
+      "prompt": "Assess release readiness for a feature using requirements, risk register, test results, defects and independent review evidence.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Maps requirements and risks to actual evidence and outcomes.",
+        "Identifies residual risk and missing/blocked evidence.",
+        "Does not make release decision; identifies authorised decision owner."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "evaluate-quality-2",
+      "type": "positive",
+      "prompt": "Prepare a quality outcome report for a change where some tests are skipped and one high risk remains unverified.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Discloses skipped and unverified checks rather than counting them as passed.",
+        "Uses appropriate quality assessment and explains limitations.",
+        "Does not conceal unresolved high risk or imply release approval."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "evaluate-quality-3",
+      "type": "positive",
+      "prompt": "Evaluate whether the current automated suite gives sufficient coverage for the documented acceptance criteria.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Assesses requirement coverage and assertion quality, not test count alone.",
+        "Identifies gaps and improvement actions grounded in evidence.",
+        "Separates coverage confidence from execution status."
+      ],
+      "fixture": null
+    },
+    {
+      "id": "evaluate-quality-4",
+      "type": "negative",
+      "prompt": "Create detailed test scenarios from approved requirements.",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Routes to design-test-cases rather than evaluating outcome."
+      ],
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "design-test-cases",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "evaluate-quality"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "The request is to design test scenarios, not assess an executed quality outcome.",
+        "expected_action": "activate_skill"
+      }
+    },
+    {
+      "id": "evaluate-quality-5",
+      "type": "negative",
+      "prompt": "Diagnose the root cause of one failing CI test from its trace.",
+      "expected_routing": "do_not_activate",
+      "expectations": [
+        "Routes to investigate-failure; quality evaluation may consume completed investigation, not replace it."
+      ],
+      "fixture": null,
+      "routing_expectation": {
+        "expected_primary_skill": "investigate-failure",
+        "allowed_companion_skills": [],
+        "forbidden_skills": [
+          "evaluate-quality"
+        ],
+        "direct_response_allowed": false,
+        "rationale": "The request is to diagnose a failed run before drawing a quality-readiness conclusion.",
+        "expected_action": "activate_skill"
+      }
+    },
+    {
+      "id": "evaluate-quality-6",
+      "type": "behavioral",
+      "prompt": "A release report shows 99.8% pass rate, but authorization coverage is absent, one critical defect is open, and no independent review exists. Produce an evidence-based quality outcome.",
+      "expected_routing": "activate",
+      "expectations": [
+        "Rejects a positive readiness conclusion despite high pass rate.",
+        "Explicitly identifies missing authorization evidence and open critical defect as blockers/quality concerns.",
+        "States independent review gap and what evidence is needed.",
+        "Uses a non-approval quality assessment and leaves release/risk acceptance to authorised owner.",
+        "Does not fabricate traceability, test execution or approvals."
+      ],
+      "fixture": null
+    }
+  ]
+}

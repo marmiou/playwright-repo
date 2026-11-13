@@ -1,0 +1,27 @@
+name: Setup Node.js and Yarn
+description: Configure the repository Node.js version and activate its pinned Yarn release.
+
+inputs:
+  node-version-file:
+    description: File containing the Node.js version.
+    required: false
+    default: .nvmrc
+  yarn-version:
+    description: Yarn version activated through Corepack.
+    required: false
+    default: 4.18.1
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v7
+      with:
+        node-version-file: ${{ inputs.node-version-file }}
+
+    - name: Enable Corepack and activate Yarn
+      shell: bash
+      run: |
+        corepack enable
+        corepack prepare yarn@${{ inputs.yarn-version }} --activate
+        yarn --version
